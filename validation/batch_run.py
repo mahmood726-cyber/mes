@@ -96,6 +96,7 @@ def main(rda_dir: str | None = None, max_reviews: int | None = None):
 
         try:
             verdict = run_mes(studies, mes_spec=spec, include_loo=False)
+            cond = verdict.conditional
             results_summary.append({
                 "review_id": review_id,
                 "file": fname,
@@ -107,6 +108,11 @@ def main(rda_dir: str | None = None, max_reviews: int | None = None):
                 "dominant_eta2": round(verdict.dominant_eta2, 4),
                 "certification": verdict.certification,
                 "pi_null_rate": round(verdict.prediction_null_rate, 4),
+                # Conditional robustness
+                "cond_low_rob_csig": round(cond["low-rob-only"]["c_sig"], 4) if "low-rob-only" in cond else None,
+                "cond_low_rob_class": cond["low-rob-only"]["class"] if "low-rob-only" in cond else None,
+                "cond_rct_csig": round(cond["rct-only"]["c_sig"], 4) if "rct-only" in cond else None,
+                "cond_rct_class": cond["rct-only"]["class"] if "rct-only" in cond else None,
             })
         except Exception as e:
             results_summary.append({
@@ -201,6 +207,23 @@ def main(rda_dir: str | None = None, max_reviews: int | None = None):
         for dim, n in sorted(dims.items(), key=lambda x: -x[1]):
             pct = 100 * n / len(ok_results)
             print(f"  {dim:22s}  {n:4d}  ({pct:5.1f}%)")
+
+        # Conditional robustness analysis
+        has_cond = [r for r in ok_results if r.get("cond_low_rob_class")]
+        print()
+        print("Conditional Robustness (low-RoB only):")
+        if has_cond:
+            reclassified = sum(1 for r in has_cond if r["cond_low_rob_class"] != r["overall_class"])
+            upgraded = sum(1 for r in has_cond
+                          if r["overall_class"] in ("FRAGILE", "UNSTABLE")
+                          and r["cond_low_rob_class"] in ("ROBUST", "MODERATE"))
+            print(f"  Reviews with quality-filtered specs: {len(has_cond)}")
+            print(f"  Reclassified: {reclassified}")
+            print(f"  Upgraded (Fragile/Unstable -> Robust/Moderate): {upgraded}")
+        else:
+            print("  No reviews had quality-filtered specs (Pairwise70 RDA files")
+            print("  lack machine-readable RoB assessments, so quality filters")
+            print("  collapse to 'all' only. This is a finding for the paper.)")
 
     if err_count > 0:
         print()

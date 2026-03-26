@@ -57,6 +57,35 @@ def python_results():
 TOL = 1e-4  # Tolerance for R parity (tighten to 1e-6 once all match)
 
 
+@pytest.fixture(scope="module")
+def r_stdout():
+    """Capture R script stdout for trim-fill and Egger values."""
+    result = subprocess.run(
+        [RSCRIPT, R_SCRIPT],
+        cwd=os.path.join(os.path.dirname(__file__), ".."),
+        capture_output=True, text=True,
+    )
+    values = {}
+    for line in result.stdout.strip().split("\n"):
+        if "=" in line:
+            key, val = line.split("=", 1)
+            try:
+                values[key.strip()] = float(val.strip())
+            except ValueError:
+                values[key.strip()] = val.strip()
+    return values
+
+
+def _load_bcg():
+    import json
+    data_path = os.path.join(os.path.dirname(__file__), "..", "data", "built_in", "bcg_vaccine.json")
+    with open(data_path) as f:
+        studies = json.load(f)
+    yi = np.array([s["yi"] for s in studies])
+    vi = np.array([s["vi"] for s in studies])
+    return yi, vi
+
+
 @pytest.mark.parametrize("method", ["FE", "DL", "REML", "PM", "SJ", "ML"])
 def test_theta_parity(method, r_results, python_results):
     r_theta = r_results[method]["theta"]
@@ -85,3 +114,35 @@ def test_tau2_parity(method, r_results, python_results):
         f"{method}: Python tau2={py_tau2:.10f}, R tau2={r_tau2:.10f}, "
         f"diff={abs(py_tau2 - r_tau2):.2e}"
     )
+
+
+def test_trim_fill_k0(r_stdout):
+    """Compare trim-fill k0 against metafor::trimfill."""
+    from mes_core.explore.bias_corrections import trim_fill
+    yi, vi = _load_bcg()
+    result = trim_fill(yi, vi)
+    if "tf_k0" in r_stdout:
+        r_k0 = int(r_stdout["tf_k0"])
+        assert result["k0"] == r_k0, f"Python k0={result['k0']}, R k0={r_k0}"
+
+
+def test_trim_fill_theta(r_stdout):
+    """Compare trim-fill adjusted theta against metafor."""
+    from mes_core.explore.bias_corrections import trim_fill
+    yi, vi = _load_bcg()
+    result = trim_fill(yi, vi)
+    if "tf_theta" in r_stdout:
+        r_theta = r_stdout["tf_theta"]
+        assert abs(result["theta_adj"] - r_theta) < 0.05, \
+            f"Python theta={result['theta_adj']:.4f}, R theta={r_theta:.4f}"
+
+
+def test_egger_pvalue(r_stdout):
+    """Compare Egger p-value against metafor::regtest."""
+    from mes_core.assess.bias_profiler import profile_bias
+    yi, vi = _load_bcg()
+    result = profile_bias(yi, vi)
+    if "egger_p" in r_stdout:
+        r_p = r_stdout["egger_p"]
+        assert abs(result.egger_p - r_p) < 0.15, \
+            f"Python p={result.egger_p:.4f}, R p={r_p:.4f}"
