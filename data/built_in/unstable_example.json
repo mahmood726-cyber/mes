@@ -1,0 +1,62 @@
+[
+  {
+    "study_id": "Sherman 2014",
+    "yi": -1.169085183420799,
+    "vi": 0.09535658109228222,
+    "measure": "logOR",
+    "design_type": "RCT",
+    "year": 2014,
+    "n1": 39,
+    "n2": 35,
+    "events1": 9,
+    "events2": 26
+  },
+  {
+    "study_id": "Sherman 2014",
+    "yi": -0.12145828110467974,
+    "vi": 0.023573453745625556,
+    "measure": "logOR",
+    "design_type": "RCT",
+    "year": 2014,
+    "n1": 38,
+    "n2": 35,
+    "events1": 25,
+    "events2": 26
+  },
+  {
+    "study_id": "Sherman 2014",
+    "yi": -0.28467061145564726,
+    "vi": 0.033108808112015255,
+    "measure": "logOR",
+    "design_type": "RCT",
+    "year": 2014,
+    "n1": 34,
+    "n2": 35,
+    "events1": 19,
+    "events2": 26
+  },
+  {
+    "study_id": "Sherman 2014",
+    "yi": -0.7012781474598756,
+    "vi": 0.05500089673304886,
+    "measure": "logOR",
+    "design_type": "RCT",
+    "year": 2014,
+    "n1": 38,
+    "n2": 35,
+    "events1": 14,
+    "events2": 26
+  },
+  {
+    "study_id": "Sherman 2014",
+    "yi": -0.24929247380927144,
+    "vi": 0.029027759230124236,
+    "measure": "logOR",
+    "design_type": "RCT",
+    "year": 2014,
+    "n1": 38,
+    "n2": 35,
+    "events1": 22,
+    "events2": 26
+  }
+]
