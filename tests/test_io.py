@@ -1,8 +1,12 @@
-"""Tests for IO — CSV reader and JSON/CSV exporter."""
+"""Tests for IO — CSV reader, RDA reader, and JSON/CSV exporter."""
 import json
+import os
+
+import pytest
 
 from mes_core.io.csv_reader import read_csv
 from mes_core.io.exporter import export_json, export_csv
+from mes_core.io.rda_reader import read_rda
 
 
 def test_read_csv(tmp_path):
@@ -90,3 +94,60 @@ def test_export_csv_empty(tmp_path):
     out = tmp_path / "empty.csv"
     export_csv([], str(out))
     assert not out.exists()  # No file created for empty results
+
+
+# --- RDA reader tests ---
+
+_RDA_DIR = r"C:\Models\Pairwise70\data"
+_HAS_RDA = os.path.isdir(_RDA_DIR)
+
+
+@pytest.mark.skipif(not _HAS_RDA, reason="Pairwise70 RDA data not available")
+def test_rda_reader_loads_studies():
+    """Read a known RDA file and verify it returns valid study dicts."""
+    rda_path = os.path.join(_RDA_DIR, "CD000219_pub5_data.rda")
+    studies = read_rda(rda_path)
+    assert studies is not None
+    assert len(studies) >= 3
+    for s in studies:
+        assert "study_id" in s
+        assert "yi" in s
+        assert "vi" in s
+        assert s["vi"] > 0
+        assert "measure" in s
+
+
+@pytest.mark.skipif(not _HAS_RDA, reason="Pairwise70 RDA data not available")
+def test_rda_reader_binary_only():
+    """CD000028 has binary data only (GIV.Mean all NA) — must still extract effects."""
+    rda_path = os.path.join(_RDA_DIR, "CD000028_pub4_data.rda")
+    studies = read_rda(rda_path)
+    assert studies is not None
+    assert len(studies) >= 3
+
+
+@pytest.mark.skipif(not _HAS_RDA, reason="Pairwise70 RDA data not available")
+def test_rda_reader_pipeline_integration():
+    """End-to-end: read RDA -> run MES pipeline."""
+    from mes_core.pipeline import run_mes
+
+    rda_path = os.path.join(_RDA_DIR, "CD000219_pub5_data.rda")
+    studies = read_rda(rda_path)
+    assert studies is not None
+    verdict = run_mes(studies, include_loo=False)
+    assert verdict.overall_class in ("ROBUST", "MODERATE", "FRAGILE", "UNSTABLE")
+    assert 0.0 <= verdict.overall_c_sig <= 1.0
+
+
+def test_rda_reader_nonexistent():
+    """Non-existent file should return None, not crash."""
+    result = read_rda("/nonexistent/path/fake.rda")
+    assert result is None
+
+
+def test_rda_reader_invalid_file(tmp_path):
+    """Invalid file should return None."""
+    bad = tmp_path / "bad.rda"
+    bad.write_text("this is not an RDA file")
+    result = read_rda(str(bad))
+    assert result is None
