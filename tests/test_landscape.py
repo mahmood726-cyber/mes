@@ -85,6 +85,15 @@ def test_verdict_prediction_null_rate():
     assert verdict.prediction_null_rate > 0
 
 
+def test_verdict_has_concordance():
+    results = _make_fragile_results()
+    verdict = synthesize_verdict(results)
+    assert "C_dir" in verdict.concordance
+    assert "C_sig" in verdict.concordance
+    assert "C_full" in verdict.concordance
+    assert verdict.concordance["C_sig"] == verdict.overall_c_sig
+
+
 def test_robust_verdict():
     results = [
         SpecResult(

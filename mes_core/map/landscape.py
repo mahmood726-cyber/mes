@@ -35,4 +35,10 @@ def synthesize_verdict(
         eta2_all=eta2,
         boundaries=bounds,
         prediction_null_rate=round(pi_null, 4),
+        concordance={
+            "C_dir": conc.C_dir,
+            "C_sig": conc.C_sig,
+            "C_full": conc.C_full,
+            "n_feasible": conc.n_feasible,
+        },
     )

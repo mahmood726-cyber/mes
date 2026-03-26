@@ -119,3 +119,4 @@ class MESVerdict:
     eta2_all: dict[str, float] = field(default_factory=dict)
     boundaries: dict = field(default_factory=dict)
     prediction_null_rate: float = 0.0
+    concordance: dict = field(default_factory=dict)  # {"C_dir": float, "C_sig": float, "C_full": float, "n_feasible": int}

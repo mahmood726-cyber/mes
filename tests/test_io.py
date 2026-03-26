@@ -57,6 +57,18 @@ def test_export_json(tmp_path):
     assert loaded["overall_class"] == "FRAGILE"
 
 
+def test_export_json_camel(tmp_path):
+    from mes_core.io.exporter import export_json_camel
+    data = {"overall_class": "FRAGILE", "c_sig": 0.62, "eta2_all": {"bias_correction": 0.93}}
+    out = tmp_path / "camel.json"
+    export_json_camel(data, str(out))
+    loaded = json.loads(out.read_text())
+    assert "overallClass" in loaded
+    assert "cSig" in loaded
+    assert "eta2All" in loaded
+    assert "biasCorrection" in loaded["eta2All"]
+
+
 def test_export_csv_results(tmp_path):
     from mes_core.models import SpecResult
 
