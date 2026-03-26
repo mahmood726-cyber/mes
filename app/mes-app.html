@@ -626,6 +626,9 @@ header .container {
       <button class="btn btn-primary" style="font-size: 1.1rem; padding: 12px 32px;" onclick="runAnalysis()" id="runBtn" aria-label="Run MES Analysis">
         Run MES Analysis
       </button>
+      <label style="margin-left:16px;font-size:0.9rem;cursor:pointer;">
+        <input type="checkbox" id="looCheckbox" style="margin-right:4px;"> Include Leave-One-Out Sensitivity
+      </label>
     </div>
   </div>
 
@@ -1918,7 +1921,7 @@ function runSingleSpec(spec, dossiers, alpha) {
 }
 
 function executeMultiverse(spec, dossiers, includeLOO) {
-  includeLOO = includeLOO !== false;
+  includeLOO = includeLOO === true;
   const specs = generateSpecs(spec, dossiers, includeLOO);
   const results = [];
   for (const s of specs) {
@@ -2440,8 +2443,9 @@ function runAnalysis() {
       const { dossiers, biasProfile } = buildDossiers(studies);
 
       // EXPLORE
-      showProgress('Running multiverse (' + DEFAULT_SPEC.baseSpecCount + ' base specifications)...');
-      const results = executeMultiverse(DEFAULT_SPEC, dossiers);
+      const includeLOO = document.getElementById('looCheckbox').checked;
+      const results = executeMultiverse(DEFAULT_SPEC, dossiers, includeLOO);
+      showProgress('Running multiverse (' + results.length + ' specifications)...');
 
       // MAP
       showProgress('Mapping evidence landscape...');
@@ -2449,8 +2453,9 @@ function runAnalysis() {
 
       // CERTIFY
       const nErrors = results.filter(r => !r.converged).length;
+      const looMult = includeLOO ? (dossiers.length + 1) : 1;
       const cert = certify(
-        DEFAULT_SPEC.baseSpecCount * (dossiers.length + 1),
+        DEFAULT_SPEC.baseSpecCount * looMult,
         results.length,
         nErrors,
         verdict.overallClass
@@ -3074,7 +3079,7 @@ function renderTab5(verdict, studies, results, dossiers) {
     + `Six pooling estimators (FE, DL, REML, PM, SJ, ML), three confidence interval methods (Wald, HKSJ, t-distribution), `
     + `four bias correction approaches (none, trim-fill, PET-PEESE, selection model), `
     + `and multiple quality/design filters were crossed factorially. `
-    + `Leave-one-out sensitivity analyses were included. `
+    + (results.some(r => r.sensitivity && r.sensitivity.startsWith('loo_')) ? `Leave-one-out sensitivity analyses were included. ` : ``)
     + `Robustness was classified using the MES concordance metric (C_sig), `
     + `where C_sig >= 90% = Robust, 70-89% = Moderate, 50-69% = Fragile, <50% = Unstable. `
     + `The overall classification was ${verdict.overallClass} (C_sig = ${(verdict.overallCSig * 100).toFixed(1)}%).`;
@@ -3182,6 +3187,12 @@ function renderTab5(verdict, studies, results, dossiers) {
       <button class="btn btn-sm" onclick="copyToClipboard('rCodeBlock')" style="margin-top:8px;">Copy R Code</button>
     </div>
 
+    <div class="card" id="rComparisonCard">
+      <div class="card-title">R Parity Comparison (metafor)</div>
+      <div class="card-subtitle">JS engine results vs. R metafor reference values for the BCG dataset. Green = match within tolerance (1e-4).</div>
+      <div id="rComparisonContent"></div>
+    </div>
+
     <div class="card">
       <div class="card-title">TruthCert Bundle</div>
       <table class="data-table">
@@ -3203,6 +3214,118 @@ function renderTab5(verdict, studies, results, dossiers) {
       <button class="btn btn-primary" onclick="window.print()" style="font-size:1rem;padding:10px 24px;">Print Report</button>
     </div>
   `;
+
+  // Populate R parity comparison table
+  populateRComparison(results);
+}
+
+/* =====================================================================
+   R PARITY: Compare JS results against embedded R metafor reference values
+   ===================================================================== */
+
+// BCG dataset reference values from R metafor (bcg_r_results.csv)
+const R_REFERENCE_BCG = {
+  FE:   { theta: -0.432137240066288, se: 0.0405714324618322, tau2: 0, I2: 92.095638504988 },
+  DL:   { theta: -0.714084218383755, se: 0.178656328563263, tau2: 0.308395570858314, I2: 92.095638504988 },
+  REML: { theta: -0.714534273275211, se: 0.179782858738692, tau2: 0.313252847021627, I2: 92.2086535451548 },
+  PM:   { theta: -0.714972591370559, se: 0.180900415221814, tau2: 0.318108089175603, I2: 92.3184370627296 },
+  SJ:   { theta: -0.717249751440247, se: 0.187061489788663, tau2: 0.345528682725781, I2: 92.8846585274979 },
+  ML:   { theta: -0.711202252613133, se: 0.171897802288778, tau2: 0.280035986325651, I2: 91.3642817816556 },
+};
+
+function populateRComparison(results) {
+  const el = document.getElementById('rComparisonContent');
+  if (!el) return;
+
+  // Check if this is the BCG dataset by looking for matching study count / theta range
+  const fullSpecs = results.filter(r => r.converged && r.sensitivity === 'full'
+    && r.biasCorrection === 'none' && r.qualityFilter === 'all'
+    && r.designFilter === 'all' && r.ciMethod === 'Wald');
+
+  if (fullSpecs.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-muted);">No base specifications found for comparison.</p>';
+    return;
+  }
+
+  // Build comparison by estimator
+  const jsValues = {};
+  for (const r of fullSpecs) {
+    jsValues[r.estimator] = { theta: r.theta, se: r.se, tau2: r.tau2, I2: r.I2 };
+  }
+
+  // Check if JS values are close to BCG reference (rough heuristic: DL theta near -0.71)
+  const dlSpec = jsValues['DL'];
+  const isBCG = dlSpec && Math.abs(dlSpec.theta - (-0.714)) < 0.05;
+
+  const refData = isBCG ? R_REFERENCE_BCG : null;
+  const tolerance = 1e-4;
+
+  function matchIcon(jsVal, rVal) {
+    if (rVal === undefined || rVal === null) return '';
+    const diff = Math.abs(jsVal - rVal);
+    const relTol = Math.max(tolerance, Math.abs(rVal) * 1e-4);
+    return diff < relTol
+      ? '<span style="color:var(--success);font-weight:700;">&#10003;</span>'
+      : '<span style="color:var(--danger);font-weight:700;">&#10007; (' + diff.toExponential(2) + ')</span>';
+  }
+
+  const estimators = ['FE', 'DL', 'REML', 'PM', 'SJ', 'ML'];
+  let rows = '';
+  let allMatch = true;
+  for (const est of estimators) {
+    const js = jsValues[est];
+    const ref = refData ? refData[est] : null;
+    if (!js) continue;
+
+    const thetaMatch = ref ? matchIcon(js.theta, ref.theta) : '';
+    const tau2Match = ref ? matchIcon(js.tau2, ref.tau2) : '';
+    const seMatch = ref ? matchIcon(js.se, ref.se) : '';
+
+    if (ref) {
+      const tDiff = Math.abs(js.theta - ref.theta);
+      const sDiff = Math.abs(js.se - ref.se);
+      const t2Diff = Math.abs(js.tau2 - ref.tau2);
+      const relTheta = Math.max(tolerance, Math.abs(ref.theta) * 1e-4);
+      const relSe = Math.max(tolerance, Math.abs(ref.se) * 1e-4);
+      const relTau2 = Math.max(tolerance, Math.abs(ref.tau2) * 1e-4);
+      if (tDiff >= relTheta || sDiff >= relSe || t2Diff >= relTau2) allMatch = false;
+    }
+
+    rows += '<tr>'
+      + '<td><strong>' + esc(est) + '</strong></td>'
+      + '<td style="font-family:var(--mono);font-size:0.85rem;">' + js.theta.toFixed(6) + '</td>'
+      + '<td style="font-family:var(--mono);font-size:0.85rem;">' + (ref ? ref.theta.toFixed(6) : 'N/A') + '</td>'
+      + '<td>' + thetaMatch + '</td>'
+      + '<td style="font-family:var(--mono);font-size:0.85rem;">' + js.tau2.toFixed(6) + '</td>'
+      + '<td style="font-family:var(--mono);font-size:0.85rem;">' + (ref ? ref.tau2.toFixed(6) : 'N/A') + '</td>'
+      + '<td>' + tau2Match + '</td>'
+      + '<td style="font-family:var(--mono);font-size:0.85rem;">' + js.se.toFixed(6) + '</td>'
+      + '<td style="font-family:var(--mono);font-size:0.85rem;">' + (ref ? ref.se.toFixed(6) : 'N/A') + '</td>'
+      + '<td>' + seMatch + '</td>'
+      + '</tr>';
+  }
+
+  const statusBadge = !refData
+    ? '<span class="badge badge-info">Custom dataset (no R reference)</span>'
+    : allMatch
+      ? '<span class="badge badge-success">All estimators match R metafor</span>'
+      : '<span class="badge badge-danger">Some mismatches detected</span>';
+
+  el.innerHTML = '<div style="margin-bottom:8px;">' + statusBadge + '</div>'
+    + '<div class="table-wrapper"><table class="data-table">'
+    + '<thead><tr>'
+    + '<th>Estimator</th>'
+    + '<th>JS theta</th><th>R theta</th><th></th>'
+    + '<th>JS tau2</th><th>R tau2</th><th></th>'
+    + '<th>JS SE</th><th>R SE</th><th></th>'
+    + '</tr></thead>'
+    + '<tbody>' + rows + '</tbody></table></div>';
+
+  if (!refData) {
+    el.innerHTML += '<p style="color:var(--text-muted);margin-top:8px;font-size:0.85rem;">'
+      + 'R reference values are embedded for the BCG vaccine dataset. '
+      + 'For other datasets, use the R code export above to validate independently.</p>';
+  }
 }
 
 function generateNarrative(verdict, nStudies, nSpecs, nFeasible, medianTheta) {
