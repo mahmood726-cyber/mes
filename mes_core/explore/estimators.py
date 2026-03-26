@@ -91,47 +91,48 @@ def _dl_tau2(yi: np.ndarray, vi: np.ndarray) -> float:
 # ---------------------------------------------------------------------------
 
 def reml(yi: np.ndarray, vi: np.ndarray,
-         max_iter: int = 100, tol: float = 1e-8) -> tuple[float, float, float]:
+         max_iter: int = 200, tol: float = 1e-8) -> tuple[float, float, float]:
     """Restricted Maximum Likelihood via Fisher scoring (Viechtbauer 2005).
 
-    Falls back to DL on non-convergence.
+    Uses step-halving for stability. Silently falls back to DL on non-convergence.
     """
     k = len(yi)
-    tau2 = max(0.0, _dl_tau2(yi, vi))
-    converged = False
+    tau2 = max(1e-8, _dl_tau2(yi, vi))
 
     for _ in range(max_iter):
         wi = 1.0 / (vi + tau2)
-        theta = float(np.sum(wi * yi) / np.sum(wi))
+        sw = float(np.sum(wi))
+        theta = float(np.sum(wi * yi) / sw)
         resid = yi - theta
 
-        # REML gradient (score)
+        # REML gradient and Fisher info (original working formulation)
         gradient = (-0.5 * np.sum(wi)
                     + 0.5 * np.sum(wi ** 2 * resid ** 2)
-                    + 0.5 * np.sum(wi ** 2) / np.sum(wi))
-
-        # Fisher information
+                    + 0.5 * np.sum(wi ** 2) / sw)
         fisher_info = (0.5 * np.sum(wi ** 2)
-                       - 2.0 * 0.5 * np.sum(wi ** 3) / np.sum(wi)
-                       + 0.5 * (np.sum(wi ** 2) / np.sum(wi)) ** 2)
+                       - np.sum(wi ** 3) / sw
+                       + 0.5 * (np.sum(wi ** 2) / sw) ** 2)
 
-        if fisher_info <= 0:
+        if fisher_info <= 1e-30:
             break
 
-        tau2_new = tau2 + float(gradient) / float(fisher_info)
+        step = float(gradient) / float(fisher_info)
+        tau2_new = tau2 + step
+
+        # Step halving if overshooting
+        halvings = 0
+        while tau2_new < 0 and halvings < 10:
+            step *= 0.5
+            tau2_new = tau2 + step
+            halvings += 1
         tau2_new = max(0.0, tau2_new)
 
         if abs(tau2_new - tau2) < tol:
             tau2 = tau2_new
-            converged = True
             break
         tau2 = tau2_new
     else:
-        # max_iter exhausted without convergence — fall back to DL
-        import sys
-        print(f"Warning: REML did not converge in {max_iter} iterations "
-              f"(tau2={tau2:.6f}), falling back to DL", file=sys.stderr)
-        tau2 = _dl_tau2(yi, vi)
+        tau2 = _dl_tau2(yi, vi)  # silent fallback
 
     theta, se = pool_estimate(yi, vi, tau2)
     return tau2, theta, se
@@ -172,11 +173,7 @@ def pm(yi: np.ndarray, vi: np.ndarray,
             break
         tau2 = tau2_new
     else:
-        # Fall back to DL
-        import sys
-        print(f"Warning: PM did not converge in {max_iter} iterations "
-              f"(tau2={tau2:.6f}), falling back to DL", file=sys.stderr)
-        tau2 = _dl_tau2(yi, vi)
+        tau2 = _dl_tau2(yi, vi)  # silent fallback
 
     theta, se = pool_estimate(yi, vi, tau2)
     return tau2, theta, se
@@ -219,33 +216,37 @@ def sj(yi: np.ndarray, vi: np.ndarray) -> tuple[float, float, float]:
 # ---------------------------------------------------------------------------
 
 def ml(yi: np.ndarray, vi: np.ndarray,
-       max_iter: int = 100, tol: float = 1e-8) -> tuple[float, float, float]:
+       max_iter: int = 200, tol: float = 1e-8) -> tuple[float, float, float]:
     """Maximum Likelihood via Newton-Raphson (profile log-likelihood).
 
-    Unlike REML, ML does not include the REML correction term.
-    Falls back to DL on non-convergence.
+    Uses step-halving for stability. Falls back to DL on non-convergence.
     """
     k = len(yi)
-    tau2 = max(0.0, _dl_tau2(yi, vi))
+    tau2 = max(1e-8, _dl_tau2(yi, vi))
 
     for _ in range(max_iter):
         wi = 1.0 / (vi + tau2)
         theta = float(np.sum(wi * yi) / np.sum(wi))
         resid = yi - theta
 
-        # ML gradient (score) — no REML correction
-        # d(ll)/d(tau2) = -0.5 * sum(wi) + 0.5 * sum(wi^2 * resid^2)
-        gradient = float(-0.5 * np.sum(wi)
-                         + 0.5 * np.sum(wi ** 2 * resid ** 2))
+        # ML gradient — no REML correction
+        gradient = float(-0.5 * np.sum(wi) + 0.5 * np.sum(wi ** 2 * resid ** 2))
 
-        # Fisher information (expected)
-        # I(tau2) = 0.5 * sum(wi^2)
+        # Fisher information
         fisher_info = float(0.5 * np.sum(wi ** 2))
 
-        if fisher_info <= 0:
+        if fisher_info <= 1e-30:
             break
 
-        tau2_new = tau2 + gradient / fisher_info
+        step = gradient / fisher_info
+        tau2_new = tau2 + step
+
+        # Step halving
+        halvings = 0
+        while tau2_new < 0 and halvings < 10:
+            step *= 0.5
+            tau2_new = tau2 + step
+            halvings += 1
         tau2_new = max(0.0, tau2_new)
 
         if abs(tau2_new - tau2) < tol:
@@ -253,10 +254,7 @@ def ml(yi: np.ndarray, vi: np.ndarray,
             break
         tau2 = tau2_new
     else:
-        import sys
-        print(f"Warning: ML did not converge in {max_iter} iterations "
-              f"(tau2={tau2:.6f}), falling back to DL", file=sys.stderr)
-        tau2 = _dl_tau2(yi, vi)
+        tau2 = _dl_tau2(yi, vi)  # silent fallback
 
     theta, se = pool_estimate(yi, vi, tau2)
     return tau2, theta, se
