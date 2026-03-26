@@ -2435,8 +2435,12 @@ function renderTab2(dossiers, biasProfile) {
   for (const d of dossiers) {
     designCounts[d.designType] = (designCounts[d.designType] || 0) + 1;
   }
+  const tierBadgeHTML = (tier) => {
+    const cls = tier === 1 ? 'badge-success' : tier === 2 ? 'badge-info' : 'badge-warning';
+    return `<span class="badge ${cls}">Tier ${tier}</span>`;
+  };
   const designRows = Object.entries(designCounts)
-    .map(([t, n]) => `<tr><td>${esc(t)}</td><td><strong>${n}</strong></td><td>Tier ${DESIGN_TIERS[t] || 1}</td></tr>`)
+    .map(([t, n]) => `<tr><td>${esc(t)}</td><td><strong>${n}</strong></td><td>${tierBadgeHTML(DESIGN_TIERS[t] || 1)}</td></tr>`)
     .join('');
 
   // RoB distribution
@@ -2445,6 +2449,49 @@ function renderTab2(dossiers, biasProfile) {
     if (d.rob) robCounts[d.rob.overall] = (robCounts[d.rob.overall] || 0) + 1;
     else robCounts.unassessed++;
   }
+
+  // RoB Traffic Light Table
+  const robColorMap = { low: '#22c55e', some_concerns: '#fbbf24', high: '#ef4444' };
+  const robLabelMap = { low: 'Low', some_concerns: 'Some Concerns', high: 'High' };
+  const hasRoB = robCounts.unassessed < dossiers.length;
+  let robTrafficHTML = '';
+  if (hasRoB) {
+    const robTableRows = dossiers.map(d => {
+      const robLevel = d.rob ? d.rob.overall : null;
+      const bgColor = robLevel ? (robColorMap[robLevel] || '#666') : '#666';
+      const label = robLevel ? (robLabelMap[robLevel] || robLevel) : 'Unassessed';
+      return `<tr>
+        <td>${esc(d.studyId)}</td>
+        <td style="text-align:center;">
+          <span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:${bgColor};vertical-align:middle;" title="${esc(label)}"></span>
+        </td>
+        <td style="color:${bgColor};font-weight:600;">${esc(label)}</td>
+      </tr>`;
+    }).join('');
+    robTrafficHTML = `
+    <div class="card">
+      <div class="card-title">Risk of Bias Traffic Light</div>
+      <div class="table-wrapper" style="max-height:400px;overflow-y:auto;">
+        <table class="data-table">
+          <thead><tr><th>Study</th><th>RoB</th><th>Level</th></tr></thead>
+          <tbody>${robTableRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  } else {
+    robTrafficHTML = `
+    <div class="card">
+      <div class="card-title">Risk of Bias Traffic Light</div>
+      <p style="color:var(--text-muted);">No risk of bias data provided. Assign RoB levels in the data table to enable this view.</p>
+    </div>`;
+  }
+
+  // Bias Profile Traffic Light Card
+  const eggerSig = biasProfile.eggerP !== null && biasProfile.eggerP < 0.10;
+  const beggSig = biasProfile.beggP !== null && biasProfile.beggP < 0.10;
+  const nBiasSig = (eggerSig ? 1 : 0) + (beggSig ? 1 : 0);
+  const biasLightColor = nBiasSig === 0 ? '#22c55e' : nBiasSig === 1 ? '#fbbf24' : '#ef4444';
+  const biasLightLabel = nBiasSig === 0 ? 'No concerns' : nBiasSig === 1 ? 'Some concern' : 'Significant bias risk';
 
   const eggerBadge = biasProfile.eggerP !== null
     ? (biasProfile.eggerP < 0.05
@@ -2458,28 +2505,40 @@ function renderTab2(dossiers, biasProfile) {
         : `<span class="badge badge-success">p = ${biasProfile.beggP.toFixed(4)}</span>`)
     : '<span class="badge badge-info">N/A (k &lt; 3)</span>';
 
+  // Study Summary Card
+  const yiVals = dossiers.map(d => d.yi);
+  const viVals = dossiers.map(d => d.vi);
+  const years = dossiers.map(d => d.year).filter(y => y !== null && y !== undefined);
+  const yiMin = Math.min(...yiVals);
+  const yiMax = Math.max(...yiVals);
+  const viMin = Math.min(...viVals);
+  const viMax = Math.max(...viVals);
+  const medianYear = years.length > 0 ? sortedMedian(years) : null;
+
   el.innerHTML = `
     <div class="metrics-grid">
       <div class="metric-card">
         <div class="metric-value">${dossiers.length}</div>
-        <div class="metric-label">Studies</div>
+        <div class="metric-label">Total Studies (k)</div>
       </div>
       <div class="metric-card">
-        <div class="metric-value">${Object.keys(designCounts).length}</div>
-        <div class="metric-label">Design Types</div>
+        <div class="metric-value">${yiMin.toFixed(3)} to ${yiMax.toFixed(3)}</div>
+        <div class="metric-label">Effect Range (yi)</div>
       </div>
       <div class="metric-card">
-        <div class="metric-value">${robCounts.unassessed === dossiers.length ? '--' : (robCounts.low + '/' + robCounts.some_concerns + '/' + robCounts.high)}</div>
-        <div class="metric-label">${robCounts.unassessed === dossiers.length ? 'No RoB Data' : 'Low / Some / High RoB'}</div>
+        <div class="metric-value">${viMin.toFixed(4)} to ${viMax.toFixed(4)}</div>
+        <div class="metric-label">Variance Range (vi)</div>
       </div>
       <div class="metric-card">
-        <div class="metric-value">${biasProfile.excessSigCount}</div>
-        <div class="metric-label">Excess Significant</div>
+        <div class="metric-value">${medianYear !== null ? Math.round(medianYear) : '--'}</div>
+        <div class="metric-label">Median Year</div>
       </div>
     </div>
 
+    ${robTrafficHTML}
+
     <div class="card">
-      <div class="card-title">Design Distribution</div>
+      <div class="card-title">Design Classification Summary</div>
       <div class="table-wrapper">
         <table class="data-table">
           <thead><tr><th>Design</th><th>Count</th><th>Tier</th></tr></thead>
@@ -2490,6 +2549,10 @@ function renderTab2(dossiers, biasProfile) {
 
     <div class="card">
       <div class="card-title">Publication Bias Profile</div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+        <span style="display:inline-block;width:40px;height:40px;border-radius:50%;background:${biasLightColor};flex-shrink:0;" title="${esc(biasLightLabel)}"></span>
+        <span style="font-weight:600;color:${biasLightColor};">${esc(biasLightLabel)}</span>
+      </div>
       <table class="data-table">
         <thead><tr><th>Test</th><th>Result</th><th>Interpretation</th></tr></thead>
         <tbody>
@@ -2540,6 +2603,10 @@ function renderTab3(results, verdict) {
   const fullSpecs = feasible.filter(r => r.sensitivity === 'full');
   const looSpecs = feasible.filter(r => r.sensitivity.startsWith('loo_'));
 
+  // Concordance
+  const conc = verdict.concordance;
+  const nSigAgreed = Math.round(conc.cSig * conc.nFeasible);
+
   el.innerHTML = `
     <div class="metrics-grid">
       <div class="metric-card">
@@ -2561,6 +2628,27 @@ function renderTab3(results, verdict) {
     </div>
 
     <div class="card">
+      <div class="card-title">Concordance Summary</div>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value" style="color:var(--success);">${(conc.cDir * 100).toFixed(1)}%</div>
+          <div class="metric-label">C<sub>dir</sub> (Direction)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" style="color:var(--accent);">${(conc.cSig * 100).toFixed(1)}%</div>
+          <div class="metric-label">C<sub>sig</sub> (Significance)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" style="color:var(--warning);">${(conc.cFull * 100).toFixed(1)}%</div>
+          <div class="metric-label">C<sub>full</sub> (Full)</div>
+        </div>
+      </div>
+      <p style="color:var(--text-muted);font-size:0.85rem;text-align:center;margin-top:4px;">
+        ${nSigAgreed} of ${conc.nFeasible} feasible specifications agree on the majority conclusion
+      </p>
+    </div>
+
+    <div class="card">
       <div class="card-title">Multiverse Dimensions</div>
       <table class="data-table">
         <thead><tr><th>Dimension</th><th>Levels</th><th>Levels Used</th></tr></thead>
@@ -2575,7 +2663,7 @@ function renderTab3(results, verdict) {
     </div>
 
     <div class="card">
-      <div class="card-title">Effect Size Distribution Across Specifications</div>
+      <div class="card-title">Specification Curve</div>
       <div class="metrics-grid">
         <div class="metric-card">
           <div class="metric-value">${thetaMin.toFixed(4)}</div>
@@ -2590,33 +2678,84 @@ function renderTab3(results, verdict) {
           <div class="metric-label">Max theta</div>
         </div>
       </div>
-      <div id="specPlot" style="width:100%;height:350px;"></div>
+      <div id="specCurvePlot" style="width:100%;height:350px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Janus Plot (Volcano)</div>
+      <div class="card-subtitle">Each point is one specification. Horizontal: effect size. Vertical: -log10(p). Points above the dashed red line are significant at alpha = 0.05.</div>
+      <div id="janusPlot" style="width:100%;height:400px;"></div>
     </div>
   `;
 
-  // Specification plot (sorted thetas)
-  if (feasible.length > 0 && typeof Plotly !== 'undefined') {
-    const sorted = thetas.slice().sort((a, b) => a - b);
-    const xArr = sorted.map((_, i) => i + 1);
-    const colors = feasible.slice().sort((a, b) => a.theta - b.theta)
-      .map(r => r.significant ? (r.direction === 'negative' ? '#dc2626' : '#059669') : '#94a3b8');
+  const plotFont = { family: getCSSVar('--font') || 'Segoe UI, system-ui, sans-serif', color: getCSSVar('--text') || '#1a1a2e' };
+  const plotBg = 'rgba(0,0,0,0)';
 
-    Plotly.newPlot('specPlot', [{
+  // Specification Curve Plot
+  if (feasible.length > 0 && typeof Plotly !== 'undefined') {
+    const sorted = [...feasible].sort((a, b) => a.theta - b.theta);
+    const xArr = sorted.map((_, i) => i + 1);
+    const yArr = sorted.map(r => r.theta);
+    const colors = sorted.map(r => r.significant ? '#3b82f6' : '#94a3b8');
+    const hoverTexts = sorted.map((r, i) => `Spec ${i + 1}<br>theta = ${r.theta.toFixed(4)}<br>${r.estimator} / ${r.ciMethod}<br>p = ${r.pValue.toFixed(4)}`);
+
+    Plotly.newPlot('specCurvePlot', [{
       x: xArr,
-      y: sorted,
+      y: yArr,
       type: 'scatter',
       mode: 'markers',
       marker: { color: colors, size: 3 },
-      hoverinfo: 'y',
+      text: hoverTexts,
+      hoverinfo: 'text',
     }], {
-      xaxis: { title: 'Specification (sorted)', showgrid: false },
-      yaxis: { title: 'Pooled Effect (theta)', zeroline: true, zerolinecolor: '#000', zerolinewidth: 2 },
+      xaxis: { title: 'Specification (sorted by effect)', showgrid: false },
+      yaxis: { title: 'Pooled Effect (theta)', zeroline: true },
+      shapes: [{ type: 'line', y0: 0, y1: 0, x0: 0, x1: sorted.length + 1, line: { dash: 'dash', color: '#888', width: 1 } }],
       margin: { l: 60, r: 20, t: 10, b: 50 },
-      paper_bgcolor: 'rgba(0,0,0,0)',
-      plot_bgcolor: 'rgba(0,0,0,0)',
-      font: { family: 'Segoe UI, system-ui, sans-serif' },
+      paper_bgcolor: plotBg, plot_bgcolor: plotBg,
+      font: plotFont,
     }, { responsive: true, displayModeBar: false });
+
+    const specCurveEl = document.getElementById('specCurvePlot');
+    window.addEventListener('resize', () => { if (specCurveEl) Plotly.Plots.resize(specCurveEl); });
   }
+
+  // Janus Plot
+  if (feasible.length > 0 && typeof Plotly !== 'undefined') {
+    const xJanus = feasible.map(r => r.theta);
+    const yJanus = feasible.map(r => -Math.log10(Math.max(r.pValue, 1e-300)));
+    const colorsJanus = feasible.map(r => r.significant ? '#3b82f6' : '#94a3b8');
+    const hoverJanus = feasible.map(r => `theta = ${r.theta.toFixed(4)}<br>p = ${r.pValue.toFixed(4)}<br>${r.estimator} / ${r.ciMethod} / ${r.biasCorrection}`);
+    const maxY = Math.max(5, ...yJanus) * 1.1;
+    const xRange = Math.max(Math.abs(Math.min(...xJanus)), Math.abs(Math.max(...xJanus))) * 1.2;
+
+    Plotly.newPlot('janusPlot', [{
+      x: xJanus,
+      y: yJanus,
+      type: 'scatter',
+      mode: 'markers',
+      marker: { color: colorsJanus, size: 4 },
+      text: hoverJanus,
+      hoverinfo: 'text',
+    }], {
+      xaxis: { title: 'Effect (theta)', zeroline: true, range: [-xRange, xRange] },
+      yaxis: { title: '-log10(p)', range: [0, maxY] },
+      shapes: [
+        { type: 'line', y0: -Math.log10(0.05), y1: -Math.log10(0.05), x0: -xRange, x1: xRange, line: { dash: 'dot', color: '#ef4444', width: 1.5 } },
+        { type: 'line', x0: 0, x1: 0, y0: 0, y1: maxY, line: { dash: 'dash', color: '#888', width: 1 } },
+      ],
+      margin: { l: 60, r: 20, t: 10, b: 50 },
+      paper_bgcolor: plotBg, plot_bgcolor: plotBg,
+      font: plotFont,
+    }, { responsive: true, displayModeBar: false });
+
+    const janusEl = document.getElementById('janusPlot');
+    window.addEventListener('resize', () => { if (janusEl) Plotly.Plots.resize(janusEl); });
+  }
+}
+
+function getCSSVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
 }
 
 function sortedMedian(arr) {
@@ -2633,35 +2772,76 @@ function sortedMedian(arr) {
 function renderTab4(verdict, results) {
   const el = document.getElementById('landscapeContent');
   const cls = verdict.overallClass.toLowerCase();
+  const robColors = { robust: '#22c55e', moderate: '#fbbf24', fragile: '#f97316', unstable: '#ef4444' };
+  const feasible = results.filter(r => r.converged);
 
-  // Conditional robustness rows
-  const condRows = Object.entries(verdict.conditional)
-    .map(([k, v]) => `<tr><td>${esc(k)}</td><td>${v.cSig.toFixed(4)}</td><td><span class="badge badge-${robBadgeClass(v.class)}">${v.class}</span></td><td>${v.n}</td></tr>`)
-    .join('');
+  // Conditional robustness cards
+  const condEntries = Object.entries(verdict.conditional);
+  const condCardsHTML = condEntries.length > 0 ? condEntries.map(([k, v]) => {
+    const cCls = v.class.toLowerCase();
+    const cColor = robColors[cCls] || '#888';
+    return `<div class="metric-card" style="border-left:4px solid ${cColor};">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${cColor};flex-shrink:0;"></span>
+        <span style="font-weight:600;font-size:0.85rem;">${esc(k)}</span>
+      </div>
+      <div class="metric-value" style="font-size:1.3rem;color:${cColor};">${(v.cSig * 100).toFixed(1)}%</div>
+      <div class="metric-label"><span class="badge badge-${robBadgeClass(v.class)}">${v.class}</span> (${v.n} specs)</div>
+    </div>`;
+  }).join('') : '<p style="color:var(--text-muted);">No conditional subsets available.</p>';
 
   // Eta2 rows
-  const eta2Rows = Object.entries(verdict.eta2All)
-    .sort((a, b) => b[1] - a[1])
+  const eta2Entries = Object.entries(verdict.eta2All).sort((a, b) => b[1] - a[1]);
+  const eta2Rows = eta2Entries
     .map(([dim, val]) => `<tr><td>${esc(dim)}</td><td>${(val * 100).toFixed(1)}%</td><td><div style="background:var(--accent);height:12px;width:${Math.min(val * 100 * 3, 100)}%;border-radius:4px;"></div></td></tr>`)
     .join('');
 
   // Boundary rows
-  let boundaryHTML = '<p style="color:var(--text-muted);">No fragility boundaries detected.</p>';
+  let boundaryHTML = '<p style="color:var(--text-muted);">No fragility boundaries detected -- the conclusion is stable across all dimension levels.</p>';
   if (Object.keys(verdict.boundaries).length > 0) {
     const bRows = [];
     for (const [dim, flippers] of Object.entries(verdict.boundaries)) {
       for (const [level, info] of Object.entries(flippers)) {
-        bRows.push(`<tr><td>${esc(dim)}</td><td>${esc(level)}</td><td>${info.agreeRate.toFixed(3)}</td><td>${info.n}</td></tr>`);
+        bRows.push(`<tr>
+          <td><strong>${esc(dim)}</strong></td>
+          <td>${esc(level)}</td>
+          <td style="color:${info.agreeRate < 0.3 ? '#ef4444' : '#f97316'};font-weight:600;">${(info.agreeRate * 100).toFixed(1)}%</td>
+          <td>${info.n}</td>
+          <td>${info.flipsSignificance} sig / ${info.flipsDirection} dir</td>
+        </tr>`);
       }
     }
     boundaryHTML = `
       <div class="table-wrapper">
         <table class="data-table">
-          <thead><tr><th>Dimension</th><th>Level</th><th>Agreement Rate</th><th>n specs</th></tr></thead>
+          <thead><tr><th>Dimension</th><th>Level</th><th>Agreement</th><th>n specs</th><th>Flips</th></tr></thead>
           <tbody>${bRows.join('')}</tbody>
         </table>
       </div>
     `;
+  }
+
+  // Prediction interval summary
+  const piNullCount = feasible.filter(r => r.piLo <= 0 && r.piHi >= 0).length;
+  const piNullPct = feasible.length > 0 ? (piNullCount / feasible.length * 100) : 0;
+  const piBarColor = piNullPct > 50 ? '#ef4444' : piNullPct > 25 ? '#fbbf24' : '#22c55e';
+
+  // Decision stability heatmap data
+  const heatmapDims = INFLUENCE_DIMS;
+  const heatmapMetrics = ['Median theta', '% Significant', 'Median I2'];
+  const heatmapLevelLabels = [];
+  const heatmapZ = [];
+  for (const dim of heatmapDims) {
+    const levels = [...new Set(feasible.map(r => r[dim]))].sort();
+    for (const level of levels) {
+      const subset = feasible.filter(r => r[dim] === level);
+      if (subset.length === 0) continue;
+      heatmapLevelLabels.push(dim + ': ' + level);
+      const medTheta = sortedMedian(subset.map(r => r.theta));
+      const pctSig = subset.filter(r => r.significant).length / subset.length;
+      const medI2 = sortedMedian(subset.map(r => r.I2));
+      heatmapZ.push([medTheta, pctSig, medI2]);
+    }
   }
 
   el.innerHTML = `
@@ -2671,9 +2851,6 @@ function renderTab4(verdict, results) {
         <div class="traffic-label ${cls}">${verdict.overallClass}</div>
         <div style="color:var(--text-muted);font-size:0.9rem;">
           C<sub>sig</sub> = ${verdict.overallCSig.toFixed(4)} | ${verdict.concordance.nFeasible} feasible specifications
-        </div>
-        <div style="margin-top:8px;">
-          <span class="badge badge-info">Prediction null rate: ${(verdict.predictionNullRate * 100).toFixed(1)}%</span>
         </div>
       </div>
     </div>
@@ -2698,30 +2875,105 @@ function renderTab4(verdict, results) {
 
     <div class="card">
       <div class="card-title">Conditional Robustness</div>
-      ${condRows ? `<div class="table-wrapper"><table class="data-table">
-        <thead><tr><th>Condition</th><th>C<sub>sig</sub></th><th>Class</th><th>n specs</th></tr></thead>
-        <tbody>${condRows}</tbody>
-      </table></div>` : '<p style="color:var(--text-muted);">No conditional subsets available.</p>'}
+      <div class="metrics-grid">${condCardsHTML}</div>
     </div>
 
     <div class="card">
       <div class="card-title">Influence Decomposition (eta-squared)</div>
-      <div class="table-wrapper">
-        <table class="data-table">
-          <thead><tr><th>Dimension</th><th>eta-squared</th><th></th></tr></thead>
-          <tbody>${eta2Rows}</tbody>
-        </table>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:300px;">
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead><tr><th>Dimension</th><th>eta-sq</th><th></th></tr></thead>
+              <tbody>${eta2Rows}</tbody>
+            </table>
+          </div>
+          <p style="color:var(--text-muted);font-size:0.85rem;margin-top:8px;">
+            Dominant: <strong>${esc(verdict.dominantDimension)}</strong> (${(verdict.dominantEta2 * 100).toFixed(1)}%)
+          </p>
+        </div>
+        <div style="flex:1;min-width:300px;">
+          <div id="influencePlot" style="width:100%;height:350px;"></div>
+        </div>
       </div>
-      <p style="color:var(--text-muted);font-size:0.85rem;margin-top:8px;">
-        Dominant dimension: <strong>${esc(verdict.dominantDimension)}</strong> (eta-sq = ${(verdict.dominantEta2 * 100).toFixed(1)}%)
-      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Decision Stability Heatmap</div>
+      <div class="card-subtitle">Median theta, % significant, and median I-squared across each dimension level.</div>
+      <div id="stabilityHeatmap" style="width:100%;height:${Math.max(300, heatmapLevelLabels.length * 22 + 80)}px;"></div>
     </div>
 
     <div class="card">
       <div class="card-title">Fragility Boundaries</div>
       ${boundaryHTML}
     </div>
+
+    <div class="card">
+      <div class="card-title">Prediction Interval Summary</div>
+      <p style="margin-bottom:8px;">${piNullCount} of ${feasible.length} specifications (${piNullPct.toFixed(1)}%) have prediction intervals crossing the null.</p>
+      <div style="background:var(--border);border-radius:6px;height:24px;overflow:hidden;">
+        <div style="background:${piBarColor};height:100%;width:${piNullPct.toFixed(1)}%;border-radius:6px;transition:width 0.3s;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text-muted);margin-top:4px;">
+        <span>0%</span>
+        <span>PI crossing null</span>
+        <span>100%</span>
+      </div>
+    </div>
   `;
+
+  const plotFont = { family: getCSSVar('--font') || 'Segoe UI, system-ui, sans-serif', color: getCSSVar('--text') || '#1a1a2e' };
+  const plotBg = 'rgba(0,0,0,0)';
+
+  // Influence Sunburst
+  if (typeof Plotly !== 'undefined' && eta2Entries.length > 0) {
+    const sunLabels = eta2Entries.map(d => d[0]);
+    const sunValues = eta2Entries.map(d => Math.max(d[1], 0.001));
+
+    Plotly.newPlot('influencePlot', [{
+      type: 'sunburst',
+      labels: sunLabels,
+      parents: sunLabels.map(() => ''),
+      values: sunValues,
+      textinfo: 'label+percent entry',
+      marker: { colors: ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444'].slice(0, sunLabels.length) },
+    }], {
+      title: { text: 'Influence Decomposition', font: { size: 14, color: plotFont.color } },
+      margin: { l: 10, r: 10, t: 40, b: 10 },
+      paper_bgcolor: plotBg,
+      font: plotFont,
+    }, { responsive: true, displayModeBar: false });
+
+    const infEl = document.getElementById('influencePlot');
+    window.addEventListener('resize', () => { if (infEl) Plotly.Plots.resize(infEl); });
+  }
+
+  // Decision Stability Heatmap
+  if (typeof Plotly !== 'undefined' && heatmapZ.length > 0) {
+    // Transpose for Plotly (z[metric][level])
+    const zT = heatmapMetrics.map((_, mi) => heatmapZ.map(row => row[mi]));
+
+    Plotly.newPlot('stabilityHeatmap', [{
+      type: 'heatmap',
+      z: zT,
+      x: heatmapLevelLabels,
+      y: heatmapMetrics,
+      colorscale: 'RdYlGn',
+      reversescale: false,
+      hovertemplate: '%{y}<br>%{x}<br>Value: %{z:.4f}<extra></extra>',
+    }], {
+      margin: { l: 120, r: 20, t: 10, b: 80 },
+      xaxis: { tickangle: -45, tickfont: { size: 10 } },
+      yaxis: { tickfont: { size: 11 } },
+      paper_bgcolor: plotBg,
+      plot_bgcolor: plotBg,
+      font: plotFont,
+    }, { responsive: true, displayModeBar: false });
+
+    const hmEl = document.getElementById('stabilityHeatmap');
+    window.addEventListener('resize', () => { if (hmEl) Plotly.Plots.resize(hmEl); });
+  }
 }
 
 function robBadgeClass(cls) {
@@ -2746,6 +2998,70 @@ function renderTab5(verdict, studies, results, dossiers) {
 
   const certBadgeClass = verdict.certification === 'PASS' ? 'badge-success'
     : verdict.certification === 'WARN' ? 'badge-warning' : 'badge-danger';
+
+  // Dimension list for methods text
+  const dimLabels = { estimator: 'estimator', ciMethod: 'CI method', biasCorrection: 'bias correction', qualityFilter: 'quality filter', designFilter: 'design filter' };
+  const nDims = INFLUENCE_DIMS.length;
+  const dimListText = INFLUENCE_DIMS.map(d => dimLabels[d] || d).join(', ');
+
+  // Methods text
+  const methodsText = `We conducted a Multiverse Evidence Synthesis (MES) using ${studies.length} studies. `
+    + `The analysis explored ${results.length} specifications across ${nDims} dimensions: ${dimListText}. `
+    + `Six pooling estimators (FE, DL, REML, PM, SJ, ML), three confidence interval methods (Wald, HKSJ, t-distribution), `
+    + `four bias correction approaches (none, trim-fill, PET-PEESE, selection model), `
+    + `and multiple quality/design filters were crossed factorially. `
+    + `Leave-one-out sensitivity analyses were included. `
+    + `Robustness was classified using the MES concordance metric (C_sig), `
+    + `where C_sig >= 90% = Robust, 70-89% = Moderate, 50-69% = Fragile, <50% = Unstable. `
+    + `The overall classification was ${verdict.overallClass} (C_sig = ${(verdict.overallCSig * 100).toFixed(1)}%).`;
+
+  // R code export
+  const yiStr = dossiers.map(d => d.yi.toFixed(6)).join(', ');
+  const viStr = dossiers.map(d => d.vi.toFixed(6)).join(', ');
+  const rCode = `library(metafor)\n\n`
+    + `# Study data\n`
+    + `yi <- c(${yiStr})\n`
+    + `vi <- c(${viStr})\n\n`
+    + `# DerSimonian-Laird\n`
+    + `fit_dl <- rma(yi=yi, vi=vi, method="DL")\n`
+    + `summary(fit_dl)\n\n`
+    + `# REML\n`
+    + `fit_reml <- rma(yi=yi, vi=vi, method="REML")\n`
+    + `summary(fit_reml)\n\n`
+    + `# Maximum Likelihood\n`
+    + `fit_ml <- rma(yi=yi, vi=vi, method="ML")\n`
+    + `summary(fit_ml)\n\n`
+    + `# Paule-Mandel\n`
+    + `fit_pm <- rma(yi=yi, vi=vi, method="PM")\n`
+    + `summary(fit_pm)\n\n`
+    + `# Sidik-Jonkman\n`
+    + `fit_sj <- rma(yi=yi, vi=vi, method="SJ")\n`
+    + `summary(fit_sj)\n\n`
+    + `# Fixed-Effect\n`
+    + `fit_fe <- rma(yi=yi, vi=vi, method="FE")\n`
+    + `summary(fit_fe)\n\n`
+    + `# Forest plot (REML)\n`
+    + `forest(fit_reml)\n\n`
+    + `# Funnel plot\n`
+    + `funnel(fit_reml)\n\n`
+    + `# Egger test\n`
+    + `regtest(fit_reml)\n`;
+
+  // GRADE-MES mapping
+  const gradeMap = { ROBUST: 'HIGH', MODERATE: 'MODERATE', FRAGILE: 'LOW', UNSTABLE: 'VERY LOW' };
+  const gradeMapping = Object.entries(gradeMap).map(([mes, grade]) => {
+    const isActive = verdict.overallClass === mes;
+    const rowStyle = isActive ? 'background:var(--accent-light);font-weight:600;' : '';
+    return `<tr style="${rowStyle}">
+      <td><span class="badge badge-${robBadgeClass(mes)}">${mes}</span></td>
+      <td>${grade}</td>
+      <td>${isActive ? 'Current' : ''}</td>
+    </tr>`;
+  }).join('');
+
+  // TruthCert bundle data
+  const bundleTimestamp = new Date().toISOString();
+  const bundleHash = simpleHash(JSON.stringify({ studies, verdict: verdict.overallClass, cSig: verdict.overallCSig }));
 
   el.innerHTML = `
     <div class="card" style="text-align:center;">
@@ -2773,8 +3089,54 @@ function renderTab5(verdict, studies, results, dossiers) {
     </div>
 
     <div class="card">
+      <div class="card-title">Auto-generated Methods Text</div>
+      <div id="methodsTextBlock" style="background:var(--bg);padding:16px;border-radius:var(--radius);border:1px solid var(--border);font-size:0.9rem;line-height:1.7;margin-bottom:12px;">
+        ${esc(methodsText)}
+      </div>
+      <button class="btn btn-sm" onclick="copyToClipboard('methodsTextBlock')">Copy Methods Text</button>
+    </div>
+
+    <div class="card">
       <div class="card-title">Narrative Interpretation</div>
       <p>${generateNarrative(verdict, studies.length, results.length, feasible.length, medianTheta)}</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">GRADE-MES Mapping</div>
+      <div class="card-subtitle">Mapping MES robustness classes to GRADE certainty levels.</div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead><tr><th>MES Class</th><th>GRADE Certainty</th><th></th></tr></thead>
+          <tbody>${gradeMapping}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">R Code Export (metafor)</div>
+      <pre id="rCodeBlock" style="background:var(--bg);padding:16px;border-radius:var(--radius);border:1px solid var(--border);font-size:0.8rem;overflow-x:auto;max-height:400px;overflow-y:auto;font-family:var(--mono);white-space:pre-wrap;">${esc(rCode)}</pre>
+      <button class="btn btn-sm" onclick="copyToClipboard('rCodeBlock')" style="margin-top:8px;">Copy R Code</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">TruthCert Bundle</div>
+      <table class="data-table">
+        <tbody>
+          <tr><td><strong>Certification</strong></td><td><span class="badge ${certBadgeClass}">${verdict.certification}</span></td></tr>
+          <tr><td><strong>Timestamp</strong></td><td>${esc(bundleTimestamp)}</td></tr>
+          <tr><td><strong>Input hash</strong></td><td style="font-family:var(--mono);font-size:0.8rem;">${esc(bundleHash)}</td></tr>
+          <tr><td><strong>Studies</strong></td><td>${studies.length}</td></tr>
+          <tr><td><strong>Specifications</strong></td><td>${results.length} total / ${feasible.length} feasible</td></tr>
+          <tr><td><strong>Verdict</strong></td><td>${verdict.overallClass} (C_sig = ${verdict.overallCSig.toFixed(4)})</td></tr>
+        </tbody>
+      </table>
+      <div class="btn-group" style="margin-top:12px;">
+        <button class="btn btn-primary btn-sm" onclick="exportTruthCertBundle()">Export Bundle (JSON)</button>
+      </div>
+    </div>
+
+    <div class="card" style="text-align:center;">
+      <button class="btn btn-primary" onclick="window.print()" style="font-size:1rem;padding:10px 24px;">Print Report</button>
     </div>
   `;
 }
@@ -2807,7 +3169,132 @@ function generateNarrative(verdict, nStudies, nSpecs, nFeasible, medianTheta) {
 
 
 /* =====================================================================
-   UTILITY
+   UTILITY: Copy to clipboard
+   ===================================================================== */
+
+function copyToClipboard(elementId) {
+  const block = document.getElementById(elementId);
+  if (!block) return;
+  const text = block.textContent || block.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    showCopyFeedback(block);
+  }).catch(() => {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showCopyFeedback(block); } catch (e) { /* ignore */ }
+    document.body.removeChild(ta);
+  });
+}
+
+function showCopyFeedback(el) {
+  const orig = el.style.borderColor;
+  el.style.borderColor = '#22c55e';
+  setTimeout(() => { el.style.borderColor = orig; }, 1200);
+}
+
+
+/* =====================================================================
+   UTILITY: Simple hash for TruthCert
+   ===================================================================== */
+
+function simpleHash(str) {
+  let h1 = 0xdeadbeef;
+  let h2 = 0x41c6ce57;
+  for (let i = 0; i < str.length; i++) {
+    const ch = str.charCodeAt(i);
+    h1 = Math.imul(h1 ^ ch, 2654435761);
+    h2 = Math.imul(h2 ^ ch, 1597334677);
+  }
+  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
+  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
+  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+}
+
+
+/* =====================================================================
+   UTILITY: Export TruthCert Bundle
+   ===================================================================== */
+
+function exportTruthCertBundle() {
+  if (!appState.verdict || !appState.results || !appState.dossiers) {
+    showError('No analysis results to export.');
+    return;
+  }
+
+  const bundle = {
+    truthcert: {
+      version: '1.0',
+      tool: 'MES - Multiverse Evidence Synthesis',
+      timestamp: new Date().toISOString(),
+      inputHash: simpleHash(JSON.stringify(appState.dossiers.map(d => ({ yi: d.yi, vi: d.vi, id: d.studyId })))),
+    },
+    input: {
+      studies: appState.dossiers.map(d => ({
+        studyId: d.studyId,
+        yi: d.yi,
+        vi: d.vi,
+        designType: d.designType,
+        designTier: d.designTier,
+        rob: d.rob,
+        year: d.year,
+      })),
+      k: appState.dossiers.length,
+    },
+    verdict: {
+      overallClass: appState.verdict.overallClass,
+      overallCSig: appState.verdict.overallCSig,
+      concordance: appState.verdict.concordance,
+      conditional: appState.verdict.conditional,
+      dominantDimension: appState.verdict.dominantDimension,
+      dominantEta2: appState.verdict.dominantEta2,
+      eta2All: appState.verdict.eta2All,
+      boundaries: appState.verdict.boundaries,
+      predictionNullRate: appState.verdict.predictionNullRate,
+      certification: appState.verdict.certification,
+      certReason: appState.verdict.certReason,
+    },
+    biasProfile: appState.biasProfile,
+    specifications: {
+      total: appState.results.length,
+      feasible: appState.results.filter(r => r.converged).length,
+      errors: appState.results.filter(r => !r.converged).length,
+    },
+    results: appState.results.map(r => ({
+      specId: r.specId,
+      theta: r.theta,
+      se: r.se,
+      ciLo: r.ciLo,
+      ciHi: r.ciHi,
+      pValue: r.pValue,
+      tau2: r.tau2,
+      I2: r.I2,
+      k: r.k,
+      significant: r.significant,
+      direction: r.direction,
+      converged: r.converged,
+    })),
+  };
+
+  const json = JSON.stringify(bundle, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mes-truthcert-bundle.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+
+/* =====================================================================
+   UTILITY: escapeHtml
    ===================================================================== */
 
 function esc(s) {
