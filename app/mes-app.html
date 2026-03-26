@@ -827,6 +827,11 @@ const appState = {
   verdict: null,
 };
 
+const _plotEls = new Set();
+window.addEventListener('resize', () => {
+  _plotEls.forEach(el => { if (el && el.parentNode) Plotly.Plots.resize(el); });
+});
+
 
 /* =====================================================================
    STATISTICAL UTILITIES
@@ -1469,6 +1474,7 @@ function selectionModel(yi, vi) {
   let bestLL = -Infinity;
   let bestEta = 1.0;
   let bestTheta = thetaBase;
+  let bestTau2 = tau2Base;
 
   for (const eta of etaGrid) {
     const { theta: thetaTry, tau2: tau2Try } = selModelFit(yi, vi, sei, eta);
@@ -1477,13 +1483,14 @@ function selectionModel(yi, vi) {
       bestLL = ll;
       bestEta = eta;
       bestTheta = thetaTry;
+      bestTau2 = tau2Try;
     }
   }
 
   const lrStat = 2 * (bestLL - llBase);
   const lrP = chi2SF(Math.max(0, lrStat), 1);
 
-  const { se: seAdj } = poolEstimate(yi, vi, tau2Base);
+  const { se: seAdj } = poolEstimate(yi, vi, bestTau2);
 
   return { thetaAdj: bestTheta, seAdj, eta: bestEta, lrP };
 }
@@ -1601,7 +1608,7 @@ function excessSignificance(yi, vi) {
   let expSig = 0;
   for (let i = 0; i < n; i++) {
     const ncp = absThetaFE / sei[i];
-    const power = 1 - normalCDF(1.96 - ncp);
+    const power = 1 - normalCDF(1.96 - ncp) + normalCDF(-1.96 - ncp);
     expSig += power;
   }
   return Math.max(0, obsSig - Math.round(expSig));
@@ -2027,8 +2034,16 @@ function conditionalRobustness(results) {
 
 const INFLUENCE_DIMS = ['estimator', 'ciMethod', 'biasCorrection', 'qualityFilter', 'designFilter'];
 
+function getInfluenceDims(results) {
+  const dims = INFLUENCE_DIMS.slice();
+  if (results.some(r => r.sensitivity !== 'full')) {
+    dims.push('sensitivity');
+  }
+  return dims;
+}
+
 function decomposeInfluence(results, dimensions) {
-  dimensions = dimensions || INFLUENCE_DIMS;
+  dimensions = dimensions || getInfluenceDims(results);
   if (!results.length) {
     const out = {};
     for (const d of dimensions) out[d] = 0;
@@ -2434,6 +2449,7 @@ function importCSV() {
 function runAnalysis() {
   const studies = syncStudiesFromTable();
   if (studies.length < 2) { showError('Need at least 2 studies with valid yi and vi > 0.'); return; }
+  const includeLOO = document.getElementById('looCheckbox').checked;
 
   showProgress('Building evidence dossiers...');
 
@@ -2442,53 +2458,68 @@ function runAnalysis() {
       // ASSESS
       const { dossiers, biasProfile } = buildDossiers(studies);
 
-      // EXPLORE
-      const includeLOO = document.getElementById('looCheckbox').checked;
-      const results = executeMultiverse(DEFAULT_SPEC, dossiers, includeLOO);
-      showProgress('Running multiverse (' + results.length + ' specifications)...');
+      showProgress('Running multiverse...');
+      setTimeout(() => {
+        try {
+          // EXPLORE
+          const results = executeMultiverse(DEFAULT_SPEC, dossiers, includeLOO);
 
-      // MAP
-      showProgress('Mapping evidence landscape...');
-      const verdict = synthesizeVerdict(results);
+          showProgress('Mapping evidence landscape (' + results.length + ' specifications)...');
+          setTimeout(() => {
+            try {
+              // MAP
+              const verdict = synthesizeVerdict(results);
 
-      // CERTIFY
-      const nErrors = results.filter(r => !r.converged).length;
-      const looMult = includeLOO ? (dossiers.length + 1) : 1;
-      const cert = certify(
-        DEFAULT_SPEC.baseSpecCount * looMult,
-        results.length,
-        nErrors,
-        verdict.overallClass
-      );
-      verdict.certification = cert.certification;
-      verdict.certReason = cert.reason;
+              // CERTIFY
+              const nErrors = results.filter(r => !r.converged).length;
+              const looMult = includeLOO ? (dossiers.length + 1) : 1;
+              const cert = certify(
+                DEFAULT_SPEC.baseSpecCount * looMult,
+                results.length,
+                nErrors,
+                verdict.overallClass
+              );
+              verdict.certification = cert.certification;
+              verdict.certReason = cert.reason;
 
-      // Store
-      appState.dossiers = dossiers;
-      appState.biasProfile = biasProfile;
-      appState.results = results;
-      appState.verdict = verdict;
+              // Store
+              appState.dossiers = dossiers;
+              appState.biasProfile = biasProfile;
+              appState.results = results;
+              appState.verdict = verdict;
 
-      // Enable tabs
-      document.getElementById('tabAssess').disabled = false;
-      document.getElementById('tabExplore').disabled = false;
-      document.getElementById('tabLandscape').disabled = false;
-      document.getElementById('tabReport').disabled = false;
+              // Enable tabs
+              document.getElementById('tabAssess').disabled = false;
+              document.getElementById('tabExplore').disabled = false;
+              document.getElementById('tabLandscape').disabled = false;
+              document.getElementById('tabReport').disabled = false;
 
-      // Render all tabs
-      renderTab2(dossiers, biasProfile);
-      renderTab3(results, verdict);
-      renderTab4(verdict, results);
-      renderTab5(verdict, studies, results, dossiers);
+              // Render all tabs
+              renderTab2(dossiers, biasProfile);
+              renderTab3(results, verdict);
+              renderTab4(verdict, results);
+              renderTab5(verdict, studies, results, dossiers);
 
-      switchTab('assess');
-      hideProgress();
+              switchTab('assess');
+              hideProgress();
+            } catch (e) {
+              hideProgress();
+              showError('Analysis failed: ' + e.message);
+              console.error(e);
+            }
+          }, 20);
+        } catch (e) {
+          hideProgress();
+          showError('Analysis failed: ' + e.message);
+          console.error(e);
+        }
+      }, 20);
     } catch (e) {
       hideProgress();
       showError('Analysis failed: ' + e.message);
       console.error(e);
     }
-  }, 50);
+  }, 20);
 }
 
 
@@ -2785,8 +2816,7 @@ function renderTab3(results, verdict) {
       font: plotFont,
     }, { responsive: true, displayModeBar: false });
 
-    const specCurveEl = document.getElementById('specCurvePlot');
-    window.addEventListener('resize', () => { if (specCurveEl) Plotly.Plots.resize(specCurveEl); });
+    _plotEls.add(document.getElementById('specCurvePlot'));
   }
 
   // Janus Plot
@@ -2818,8 +2848,7 @@ function renderTab3(results, verdict) {
       font: plotFont,
     }, { responsive: true, displayModeBar: false });
 
-    const janusEl = document.getElementById('janusPlot');
-    window.addEventListener('resize', () => { if (janusEl) Plotly.Plots.resize(janusEl); });
+    _plotEls.add(document.getElementById('janusPlot'));
   }
 }
 
@@ -3014,8 +3043,7 @@ function renderTab4(verdict, results) {
       font: plotFont,
     }, { responsive: true, displayModeBar: false });
 
-    const infEl = document.getElementById('influencePlot');
-    window.addEventListener('resize', () => { if (infEl) Plotly.Plots.resize(infEl); });
+    _plotEls.add(document.getElementById('influencePlot'));
   }
 
   // Decision Stability Heatmap
@@ -3040,8 +3068,7 @@ function renderTab4(verdict, results) {
       font: plotFont,
     }, { responsive: true, displayModeBar: false });
 
-    const hmEl = document.getElementById('stabilityHeatmap');
-    window.addEventListener('resize', () => { if (hmEl) Plotly.Plots.resize(hmEl); });
+    _plotEls.add(document.getElementById('stabilityHeatmap'));
   }
 }
 
@@ -3130,7 +3157,7 @@ function renderTab5(verdict, studies, results, dossiers) {
 
   // TruthCert bundle data
   const bundleTimestamp = new Date().toISOString();
-  const bundleHash = simpleHash(JSON.stringify({ studies, verdict: verdict.overallClass, cSig: verdict.overallCSig }));
+  const bundleHash = fastHash(JSON.stringify({ studies, verdict: verdict.overallClass, cSig: verdict.overallCSig }));
 
   el.innerHTML = `
     <div class="card" style="text-align:center;">
@@ -3389,7 +3416,8 @@ function showCopyFeedback(el) {
    UTILITY: Simple hash for TruthCert
    ===================================================================== */
 
-function simpleHash(str) {
+// Non-cryptographic hash for v1.0; replace with SHA-256 for production
+function fastHash(str) {
   let h1 = 0xdeadbeef;
   let h2 = 0x41c6ce57;
   for (let i = 0; i < str.length; i++) {
@@ -3418,7 +3446,7 @@ function exportTruthCertBundle() {
       version: '1.0',
       tool: 'MES - Multiverse Evidence Synthesis',
       timestamp: new Date().toISOString(),
-      inputHash: simpleHash(JSON.stringify(appState.dossiers.map(d => ({ yi: d.yi, vi: d.vi, id: d.studyId })))),
+      inputHash: fastHash(JSON.stringify(appState.dossiers.map(d => ({ yi: d.yi, vi: d.vi, id: d.studyId })))),
     },
     input: {
       studies: appState.dossiers.map(d => ({
