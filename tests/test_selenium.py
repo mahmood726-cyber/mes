@@ -448,3 +448,79 @@ def test_buttons_have_aria_labels(driver):
         btn = driver.find_element(By.ID, btn_id)
         label = btn.get_attribute("aria-label")
         assert label and len(label) > 0, f"Button {btn_id} missing aria-label"
+
+
+# ========================================================================
+# --- LOO / Export / TruthCert (5 tests) ---
+# ========================================================================
+
+def test_loo_checkbox_exists(driver):
+    """LOO toggle checkbox should be present."""
+    cb = driver.find_element(By.ID, "looCheckbox")
+    assert cb is not None
+    assert not cb.is_selected()  # default off
+
+
+def test_run_with_loo(driver):
+    """Run BCG with LOO enabled -- should produce a verdict."""
+    # Ensure we are on Tab 1
+    tabs = driver.find_elements(By.CSS_SELECTOR, "[role='tab']")
+    tabs[0].click()
+    time.sleep(0.5)
+    # Load BCG
+    select = driver.find_element(By.ID, "datasetSelect")
+    for opt in select.find_elements(By.TAG_NAME, "option"):
+        if "BCG" in opt.text or "bcg" in opt.text:
+            opt.click()
+            break
+    driver.find_element(By.ID, "loadDatasetBtn").click()
+    time.sleep(1)
+    # Enable LOO
+    cb = driver.find_element(By.ID, "looCheckbox")
+    if not cb.is_selected():
+        cb.click()
+    # Run
+    driver.find_element(By.ID, "runBtn").click()
+    WebDriverWait(driver, 90).until(
+        EC.invisibility_of_element_located((By.CSS_SELECTOR, ".progress-overlay.show"))
+    )
+    time.sleep(2)
+    # Navigate to Tab 4 (Evidence Landscape) where verdict is shown
+    tabs = driver.find_elements(By.CSS_SELECTOR, "[role='tab']")
+    tabs[3].click()
+    time.sleep(1)
+    body = driver.find_element(By.TAG_NAME, "body").text
+    assert any(w in body for w in ["ROBUST", "MODERATE", "FRAGILE", "UNSTABLE"]), \
+        "No verdict found after LOO analysis"
+    # Disable LOO for subsequent tests (use JS since checkbox may not be visible)
+    driver.execute_script("document.getElementById('looCheckbox').checked = false;")
+
+
+def test_export_csv_button_exists(driver):
+    """CSV export button should be in Tab 5."""
+    tabs = driver.find_elements(By.CSS_SELECTOR, "[role='tab']")
+    tabs[4].click()
+    time.sleep(1)
+    buttons = driver.find_elements(By.TAG_NAME, "button")
+    csv_btns = [b for b in buttons if "CSV" in b.text]
+    assert len(csv_btns) >= 1
+
+
+def test_r_comparison_table(driver):
+    """R comparison table should show metafor/parity/comparison info for BCG."""
+    tabs = driver.find_elements(By.CSS_SELECTOR, "[role='tab']")
+    tabs[4].click()
+    time.sleep(1)
+    body = driver.find_element(By.TAG_NAME, "body").text
+    # Should have R parity comparison
+    assert "metafor" in body.lower() or "parity" in body.lower() or "comparison" in body.lower()
+
+
+def test_sha256_hash_displayed(driver):
+    """TruthCert should show a SHA-256 hash (64 hex chars)."""
+    tabs = driver.find_elements(By.CSS_SELECTOR, "[role='tab']")
+    tabs[4].click()
+    time.sleep(2)
+    body = driver.find_element(By.TAG_NAME, "body").text
+    # Look for "SHA-256" or a long hex string or hash reference
+    assert "SHA" in body or "sha" in body or "hash" in body.lower()

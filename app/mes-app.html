@@ -397,6 +397,7 @@ header .container {
   animation: slideIn 0.3s ease;
 }
 .toast.show { display: block; }
+.toast.toast-success { background: var(--success); }
 @keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
 
 /* ===================================================================
@@ -702,6 +703,7 @@ header .container {
      ERROR TOAST
      =================================================================== -->
 <div class="toast" id="errorToast"></div>
+<div class="toast toast-success" id="successToast"></div>
 
 <!-- ===================================================================
      JAVASCRIPT ENGINE
@@ -2261,6 +2263,13 @@ function showError(msg) {
   setTimeout(() => toast.classList.remove('show'), 5000);
 }
 
+function showSuccess(msg) {
+  const toast = document.getElementById('successToast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 5000);
+}
+
 
 /* =====================================================================
    UI: DATA TABLE
@@ -2392,14 +2401,15 @@ function importCSV() {
       const sep = lines[0].includes('\t') ? '\t' : ',';
       const headers = lines[0].split(sep).map(h => h.trim().toLowerCase().replace(/["\s]/g, ''));
 
-      // Fuzzy matching
+      // Fuzzy matching — expanded aliases
       const colMap = {};
       const patterns = {
-        study_id: ['study_id', 'studyid', 'study', 'id', 'author', 'name', 'source'],
-        yi: ['yi', 'effect', 'effectsize', 'es', 'logror', 'logor', 'logrr', 'smd', 'theta', 'estimate'],
+        study_id: ['study_id', 'studyid', 'study', 'author', 'name', 'id', 'source'],
+        yi: ['yi', 'effect', 'effectsize', 'es', 'logror', 'logor', 'logrr', 'lnor', 'lnrr', 'lnhr', 'smd', 'theta', 'estimate'],
         vi: ['vi', 'variance', 'var', 'samplingvariance', 'v'],
-        design_type: ['design_type', 'designtype', 'design', 'studydesign'],
-        rob_overall: ['rob_overall', 'roboverall', 'rob', 'riskofbias', 'quality'],
+        se: ['se', 'sei', 'stderr', 'standard_error', 'standarderror'],
+        design_type: ['design_type', 'designtype', 'design', 'type', 'studydesign', 'study_design'],
+        rob_overall: ['rob_overall', 'roboverall', 'rob', 'riskofbias', 'risk', 'quality'],
       };
 
       for (const [field, aliases] of Object.entries(patterns)) {
@@ -2412,19 +2422,33 @@ function importCSV() {
         }
       }
 
+      // SE-to-VI: if vi column missing but se column found, flag for conversion
+      const useSEasVI = !('vi' in colMap) && ('se' in colMap);
+      if (useSEasVI) colMap.vi = colMap.se; // will convert se -> vi below
+
       if (!('yi' in colMap) || !('vi' in colMap)) {
-        showError('CSV must have columns for effect size (yi) and variance (vi).');
+        showError('CSV must have columns for effect size (yi) and variance (vi) or standard error (se).');
         return;
       }
 
       clearTable();
       let imported = 0;
+      let seConverted = 0;
       for (let i = 1; i < lines.length; i++) {
         const cols = lines[i].split(sep).map(c => c.trim().replace(/^"|"$/g, ''));
+        const rawYi = parseFloat(cols[colMap.yi]);
+        let rawVi = parseFloat(cols[colMap.vi]);
+
+        // Convert SE to variance if needed
+        if (useSEasVI && isFinite(rawVi)) {
+          rawVi = rawVi * rawVi; // vi = se^2
+          seConverted++;
+        }
+
         const study = {
           study_id: ('study_id' in colMap) ? cols[colMap.study_id] : ('Study_' + i),
-          yi: parseFloat(cols[colMap.yi]),
-          vi: parseFloat(cols[colMap.vi]),
+          yi: rawYi,
+          vi: rawVi,
           design_type: ('design_type' in colMap) ? cols[colMap.design_type] : 'RCT',
         };
         if ('rob_overall' in colMap) study.rob_overall = cols[colMap.rob_overall];
@@ -2433,7 +2457,12 @@ function importCSV() {
           imported++;
         }
       }
-      if (imported === 0) showError('No valid rows found in CSV.');
+      if (imported === 0) {
+        showError('No valid rows found in CSV.');
+      } else {
+        const seNote = seConverted > 0 ? ` (${seConverted} had SE converted to variance)` : '';
+        showSuccess(`Imported ${imported} studies from CSV${seNote}.`);
+      }
     } catch (err) {
       showError('CSV parsing error: ' + err.message);
     }
@@ -2827,6 +2856,15 @@ function renderTab3(results, verdict) {
     const hoverJanus = feasible.map(r => `theta = ${r.theta.toFixed(4)}<br>p = ${r.pValue.toFixed(4)}<br>${r.estimator} / ${r.ciMethod} / ${r.biasCorrection}`);
     const maxY = Math.max(5, ...yJanus) * 1.1;
     const xRange = Math.max(Math.abs(Math.min(...xJanus)), Math.abs(Math.max(...xJanus))) * 1.2;
+    const minTheta = -xRange;
+    const maxTheta = xRange;
+    const sigLine = -Math.log10(0.05);
+
+    // Quadrant counts
+    const qTopLeft = feasible.filter(r => r.theta < 0 && r.significant).length;
+    const qTopRight = feasible.filter(r => r.theta > 0 && r.significant).length;
+    const qBotLeft = feasible.filter(r => r.theta < 0 && !r.significant).length;
+    const qBotRight = feasible.filter(r => r.theta > 0 && !r.significant).length;
 
     Plotly.newPlot('janusPlot', [{
       x: xJanus,
@@ -2837,11 +2875,23 @@ function renderTab3(results, verdict) {
       text: hoverJanus,
       hoverinfo: 'text',
     }], {
-      xaxis: { title: 'Effect (theta)', zeroline: true, range: [-xRange, xRange] },
+      xaxis: { title: 'Effect (theta)', zeroline: true, range: [minTheta, maxTheta] },
       yaxis: { title: '-log10(p)', range: [0, maxY] },
       shapes: [
-        { type: 'line', y0: -Math.log10(0.05), y1: -Math.log10(0.05), x0: -xRange, x1: xRange, line: { dash: 'dot', color: '#ef4444', width: 1.5 } },
+        // Quadrant background zones (drawn below data via layer:'below')
+        { type: 'rect', x0: minTheta, x1: 0, y0: sigLine, y1: maxY, fillcolor: 'rgba(191,219,254,0.25)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', x0: 0, x1: maxTheta, y0: sigLine, y1: maxY, fillcolor: 'rgba(254,202,202,0.25)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', x0: minTheta, x1: 0, y0: 0, y1: sigLine, fillcolor: 'rgba(229,231,235,0.2)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', x0: 0, x1: maxTheta, y0: 0, y1: sigLine, fillcolor: 'rgba(229,231,235,0.2)', line: { width: 0 }, layer: 'below' },
+        // Reference lines
+        { type: 'line', y0: sigLine, y1: sigLine, x0: minTheta, x1: maxTheta, line: { dash: 'dot', color: '#ef4444', width: 1.5 } },
         { type: 'line', x0: 0, x1: 0, y0: 0, y1: maxY, line: { dash: 'dash', color: '#888', width: 1 } },
+      ],
+      annotations: [
+        { x: minTheta * 0.5, y: maxY * 0.8, text: `Sig. Negative (${qTopLeft})`, showarrow: false, font: { size: 11, color: '#666' } },
+        { x: maxTheta * 0.5, y: maxY * 0.8, text: `Sig. Positive (${qTopRight})`, showarrow: false, font: { size: 11, color: '#666' } },
+        { x: minTheta * 0.5, y: sigLine * 0.4, text: `Non-sig. (${qBotLeft})`, showarrow: false, font: { size: 10, color: '#999' } },
+        { x: maxTheta * 0.5, y: sigLine * 0.4, text: `Non-sig. (${qBotRight})`, showarrow: false, font: { size: 10, color: '#999' } },
       ],
       margin: { l: 60, r: 20, t: 10, b: 50 },
       paper_bgcolor: plotBg, plot_bgcolor: plotBg,
