@@ -479,6 +479,52 @@ header .container {
 }
 
 /* ===================================================================
+   ABOUT MODAL
+   =================================================================== */
+.about-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1500;
+  align-items: center;
+  justify-content: center;
+}
+.about-overlay.show { display: flex; }
+
+.about-box {
+  background: var(--bg-card);
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 520px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.about-box h2 { font-size: 1.4rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.about-box .about-version { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; }
+.about-box p { font-size: 0.9rem; line-height: 1.6; margin-bottom: 12px; color: var(--text); }
+.about-box .about-section-title { font-weight: 600; font-size: 0.9rem; color: var(--accent); margin-bottom: 4px; margin-top: 16px; }
+.about-box .about-citation { font-family: var(--mono); font-size: 0.8rem; background: var(--bg); padding: 10px; border-radius: var(--radius); border: 1px solid var(--border); }
+
+.about-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.about-close:hover { background: var(--danger-bg); color: var(--danger); }
+
+/* ===================================================================
    PRINT STYLES
    =================================================================== */
 @media print {
@@ -497,9 +543,10 @@ header .container {
      =================================================================== -->
 <header>
   <div class="container">
-    <div class="logo">MES <span>Multiverse Evidence Synthesis v0.1</span></div>
+    <div class="logo">MES <span>Multiverse Evidence Synthesis v1.0</span></div>
     <div class="header-controls">
-      <button class="btn-icon" id="btnTheme" title="Toggle dark mode" onclick="toggleTheme()">&#9790;</button>
+      <button class="btn-icon" id="aboutBtn" title="About MES" aria-label="About MES" onclick="openAboutModal()">&#9432;</button>
+      <button class="btn-icon" id="themeBtn" title="Toggle dark mode" aria-label="Toggle dark mode" onclick="toggleTheme()">&#9790;</button>
     </div>
   </div>
 </header>
@@ -507,12 +554,12 @@ header .container {
 <!-- ===================================================================
      TAB BAR
      =================================================================== -->
-<nav class="tab-bar container" role="tablist">
-  <button class="tab-btn active" role="tab" data-tab="input" onclick="switchTab('input')">1. Data Input</button>
-  <button class="tab-btn" role="tab" data-tab="assess" onclick="switchTab('assess')" disabled id="tabAssess">2. Evidence Assessment</button>
-  <button class="tab-btn" role="tab" data-tab="explore" onclick="switchTab('explore')" disabled id="tabExplore">3. Multiverse Explorer</button>
-  <button class="tab-btn" role="tab" data-tab="landscape" onclick="switchTab('landscape')" disabled id="tabLandscape">4. Evidence Landscape</button>
-  <button class="tab-btn" role="tab" data-tab="report" onclick="switchTab('report')" disabled id="tabReport">5. Report &amp; Certify</button>
+<nav class="tab-bar container" role="tablist" aria-label="Analysis steps">
+  <button class="tab-btn active" role="tab" data-tab="input" id="tabInput" aria-selected="true" aria-controls="inputPanel" onclick="switchTab('input')">1. Data Input</button>
+  <button class="tab-btn" role="tab" data-tab="assess" id="tabAssess" aria-selected="false" aria-controls="assessPanel" onclick="switchTab('assess')" disabled>2. Evidence Assessment</button>
+  <button class="tab-btn" role="tab" data-tab="explore" id="tabExplore" aria-selected="false" aria-controls="explorePanel" onclick="switchTab('explore')" disabled>3. Multiverse Explorer</button>
+  <button class="tab-btn" role="tab" data-tab="landscape" id="tabLandscape" aria-selected="false" aria-controls="landscapePanel" onclick="switchTab('landscape')" disabled>4. Evidence Landscape</button>
+  <button class="tab-btn" role="tab" data-tab="report" id="tabReport" aria-selected="false" aria-controls="reportPanel" onclick="switchTab('report')" disabled>5. Report &amp; Certify</button>
 </nav>
 
 <!-- ===================================================================
@@ -523,7 +570,7 @@ header .container {
   <!-- =================================================================
        TAB 1 — DATA INPUT
        ================================================================= -->
-  <div class="tab-panel active" id="inputPanel" role="tabpanel">
+  <div class="tab-panel active" id="inputPanel" role="tabpanel" aria-labelledby="tabInput">
 
     <div class="card">
       <div class="card-title">Load Built-in Dataset</div>
@@ -536,7 +583,7 @@ header .container {
           <option value="fragile">Fragile Example (14 studies, logOR)</option>
           <option value="unstable">Unstable Example (5 studies, logOR)</option>
         </select>
-        <button class="btn btn-primary" onclick="loadBuiltIn()">Load</button>
+        <button class="btn btn-primary" id="loadDatasetBtn" aria-label="Load selected dataset" onclick="loadBuiltIn()">Load</button>
       </div>
     </div>
 
@@ -545,7 +592,7 @@ header .container {
       <div class="card-subtitle">CSV must have columns for study ID, effect size (yi), and variance (vi). Headers are fuzzy-matched.</div>
       <div class="form-row">
         <input type="file" id="csvFile" accept=".csv,.tsv,.txt">
-        <button class="btn" onclick="importCSV()">Import</button>
+        <button class="btn" id="importCsvBtn" aria-label="Import CSV file" onclick="importCSV()">Import</button>
       </div>
     </div>
 
@@ -553,8 +600,8 @@ header .container {
       <div class="card-title">Study Data</div>
       <div class="study-count">Studies: <strong id="studyCount">0</strong></div>
       <div class="btn-group" style="margin-bottom: 12px;">
-        <button class="btn btn-sm" onclick="addRow()">+ Add Row</button>
-        <button class="btn btn-sm btn-danger" onclick="clearTable()">Clear All</button>
+        <button class="btn btn-sm" id="addRowBtn" aria-label="Add a new study row" onclick="addRow()">+ Add Row</button>
+        <button class="btn btn-sm btn-danger" id="clearAllBtn" aria-label="Clear all study data" onclick="clearTable()">Clear All</button>
       </div>
       <div class="table-wrapper">
         <table class="data-table" id="dataTable">
@@ -576,7 +623,7 @@ header .container {
     </div>
 
     <div class="card" style="text-align: center;">
-      <button class="btn btn-primary" style="font-size: 1.1rem; padding: 12px 32px;" onclick="runAnalysis()" id="btnRun">
+      <button class="btn btn-primary" style="font-size: 1.1rem; padding: 12px 32px;" onclick="runAnalysis()" id="runBtn" aria-label="Run MES Analysis">
         Run MES Analysis
       </button>
     </div>
@@ -585,7 +632,7 @@ header .container {
   <!-- =================================================================
        TAB 2 — EVIDENCE ASSESSMENT
        ================================================================= -->
-  <div class="tab-panel" id="assessPanel" role="tabpanel">
+  <div class="tab-panel" id="assessPanel" role="tabpanel" aria-labelledby="tabAssess">
     <div id="assessContent">
       <p style="color: var(--text-muted);">Run analysis to see results.</p>
     </div>
@@ -594,7 +641,7 @@ header .container {
   <!-- =================================================================
        TAB 3 — MULTIVERSE EXPLORER
        ================================================================= -->
-  <div class="tab-panel" id="explorePanel" role="tabpanel">
+  <div class="tab-panel" id="explorePanel" role="tabpanel" aria-labelledby="tabExplore">
     <div id="exploreContent">
       <p style="color: var(--text-muted);">Run analysis to see results.</p>
     </div>
@@ -603,7 +650,7 @@ header .container {
   <!-- =================================================================
        TAB 4 — EVIDENCE LANDSCAPE
        ================================================================= -->
-  <div class="tab-panel" id="landscapePanel" role="tabpanel">
+  <div class="tab-panel" id="landscapePanel" role="tabpanel" aria-labelledby="tabLandscape">
     <div id="landscapeContent">
       <p style="color: var(--text-muted);">Run analysis to see results.</p>
     </div>
@@ -612,13 +659,31 @@ header .container {
   <!-- =================================================================
        TAB 5 — REPORT & CERTIFY
        ================================================================= -->
-  <div class="tab-panel" id="reportPanel" role="tabpanel">
+  <div class="tab-panel" id="reportPanel" role="tabpanel" aria-labelledby="tabReport">
     <div id="reportContent">
       <p style="color: var(--text-muted);">Run analysis to see results.</p>
     </div>
   </div>
 
 </main>
+
+<!-- ===================================================================
+     ABOUT MODAL
+     =================================================================== -->
+<div class="about-overlay" id="aboutOverlay" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+  <div class="about-box">
+    <button class="about-close" id="aboutCloseBtn" aria-label="Close About dialog" onclick="closeAboutModal()">&times;</button>
+    <h2 id="aboutTitle">About MES</h2>
+    <div class="about-version">v1.0.0</div>
+    <p>Multiverse Evidence Synthesis &mdash; replacing point estimates with evidence landscapes.</p>
+    <div class="about-section-title">Methodology</div>
+    <p>MES uses a three-phase approach: <strong>ASSESS</strong> builds evidence dossiers for each study (design tier, risk of bias, publication bias profile); <strong>EXPLORE</strong> executes hundreds of analytical specifications across estimator, CI method, bias correction, quality filter, and design filter dimensions; <strong>MAP</strong> synthesizes the multiverse into concordance metrics and a robustness verdict (Robust / Moderate / Fragile / Unstable).</p>
+    <div class="about-section-title">Author</div>
+    <p>AUTHOR_PLACEHOLDER</p>
+    <div class="about-section-title">Citation</div>
+    <div class="about-citation">Ahmad M. Multiverse Evidence Synthesis: replacing point estimates with evidence landscapes. BMJ. 2026.</div>
+  </div>
+</div>
 
 <!-- ===================================================================
      PROGRESS OVERLAY
@@ -2123,11 +2188,18 @@ function certify(nSpecs, nFeasible, nErrors, verdictClass) {
    ===================================================================== */
 
 function switchTab(tabId) {
-  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+  });
   document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
 
   const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
-  if (btn && !btn.disabled) btn.classList.add('active');
+  if (btn && !btn.disabled) {
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+    btn.focus();
+  }
 
   const panelMap = {
     input: 'inputPanel',
@@ -2150,14 +2222,6 @@ function toggleTheme() {
   const isDark = document.body.classList.contains('dark');
   try { localStorage.setItem('mes_theme', isDark ? 'dark' : 'light'); } catch (e) {}
 }
-
-// Restore theme
-(function() {
-  try {
-    if (localStorage.getItem('mes_theme') === 'dark') document.body.classList.add('dark');
-  } catch (e) {}
-})();
-
 
 /* =====================================================================
    UI: PROGRESS / ERROR
@@ -3305,12 +3369,87 @@ function esc(s) {
 
 
 /* =====================================================================
-   INIT — add 3 empty rows
+   ABOUT MODAL
+   ===================================================================== */
+
+function openAboutModal() {
+  document.getElementById('aboutOverlay').classList.add('show');
+  document.getElementById('aboutCloseBtn').focus();
+  document.addEventListener('keydown', aboutKeyHandler);
+}
+
+function closeAboutModal() {
+  document.getElementById('aboutOverlay').classList.remove('show');
+  document.removeEventListener('keydown', aboutKeyHandler);
+  document.getElementById('aboutBtn').focus();
+}
+
+function aboutKeyHandler(e) {
+  if (e.key === 'Escape') { closeAboutModal(); e.preventDefault(); }
+}
+
+// Click outside about box to close
+document.getElementById('aboutOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeAboutModal();
+});
+
+
+/* =====================================================================
+   KEYBOARD NAVIGATION (Arrow keys for tabs)
+   ===================================================================== */
+
+document.querySelector('[role="tablist"]').addEventListener('keydown', function(e) {
+  const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+  const current = tabs.findIndex(t => t.getAttribute('aria-selected') === 'true');
+  if (current < 0) return;
+
+  let next = -1;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    // Find next non-disabled tab
+    for (let i = 1; i <= tabs.length; i++) {
+      const idx = (current + i) % tabs.length;
+      if (!tabs[idx].disabled) { next = idx; break; }
+    }
+    e.preventDefault();
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    // Find previous non-disabled tab
+    for (let i = 1; i <= tabs.length; i++) {
+      const idx = (current - i + tabs.length) % tabs.length;
+      if (!tabs[idx].disabled) { next = idx; break; }
+    }
+    e.preventDefault();
+  } else if (e.key === 'Home') {
+    for (let i = 0; i < tabs.length; i++) {
+      if (!tabs[i].disabled) { next = i; break; }
+    }
+    e.preventDefault();
+  } else if (e.key === 'End') {
+    for (let i = tabs.length - 1; i >= 0; i--) {
+      if (!tabs[i].disabled) { next = i; break; }
+    }
+    e.preventDefault();
+  }
+
+  if (next >= 0 && next !== current) {
+    const tabId = tabs[next].dataset.tab;
+    switchTab(tabId);
+  }
+});
+
+
+/* =====================================================================
+   INIT — add 3 empty rows + restore theme
    ===================================================================== */
 (function init() {
   addRow();
   addRow();
   addRow();
+  // Restore theme from localStorage
+  try {
+    if (localStorage.getItem('mes_theme') === 'dark') {
+      document.body.classList.add('dark');
+    }
+  } catch (e) {}
 })();
 
 </script>
