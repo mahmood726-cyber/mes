@@ -197,9 +197,10 @@ def sj(yi: np.ndarray, vi: np.ndarray) -> tuple[float, float, float]:
         theta, se = pool_estimate(yi, vi, 0.0)
         return 0.0, theta, se
 
-    # Initial tau2 from unweighted residual variance
+    # Initial tau2 from unweighted population variance (divide by k, not k-1)
+    # Matches metafor: tau2.0 <- var(ymci) * (k-1)/k  which is population variance
     theta_uw = float(np.mean(yi))
-    tau2_0 = float(np.sum((yi - theta_uw) ** 2) / (k - 1))
+    tau2_0 = float(np.sum((yi - theta_uw) ** 2) / k)
 
     # Compute Q with weights based on tau2_0
     wi = 1.0 / (vi + tau2_0)
