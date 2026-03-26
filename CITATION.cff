@@ -1,0 +1,20 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+title: "MES: Multiverse Evidence Synthesis"
+type: software
+authors:
+  - given-names: Mahmood
+    family-names: Ahmad
+    orcid: "https://orcid.org/0009-0003-7781-4478"
+    affiliation: "Royal Free Hospital, London, United Kingdom"
+version: 1.0.0
+date-released: 2026-03-26
+license: MIT
+repository-code: "https://github.com/mahmood726-cyber/mes"
+keywords:
+  - meta-analysis
+  - multiverse analysis
+  - evidence synthesis
+  - robustness
+  - specification curve
+  - publication bias
