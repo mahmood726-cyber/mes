@@ -16,9 +16,9 @@
 
 **Data Sources:** 403 Cochrane systematic reviews with ≥3 studies from the Pairwise70 dataset.
 
-**Methods:** We developed Multiverse Evidence Synthesis (MES), a three-phase framework comprising ASSESS (annotate evidence quality and study design), EXPLORE (execute all defensible analytical specifications), and MAP (classify robustness). MES extends specification-curve analysis by incorporating evidence quality and study design as first-class multiverse dimensions. Each analysis yields 648+ specifications across six dimensions: heterogeneity estimator (fixed-effect/DerSimonian-Laird/REML/Paule-Mandel/Sidik-Jonkman/maximum likelihood), confidence interval method (Wald/Hartung-Knapp-Sidik-Jonkman/t-distribution), bias correction (none/trim-and-fill/PET-PEESE/selection model), quality filter, design filter, and leave-one-out sensitivity. Robustness was quantified by a concordance score (C_sig) representing the proportion of specifications yielding a statistically significant result in the same direction as the primary estimate, and classified into four tiers: ROBUST (C_sig ≥ 0.9), MODERATE (0.65 ≤ C_sig < 0.9), FRAGILE (0.5 ≤ C_sig < 0.65), and UNSTABLE (C_sig < 0.5).
+**Methods:** We developed Multiverse Evidence Synthesis (MES), a three-phase framework comprising ASSESS (annotate evidence quality and study design), EXPLORE (execute all defensible analytical specifications), and MAP (classify robustness). MES extends specification-curve analysis by incorporating evidence quality and study design as first-class multiverse dimensions. Each analysis yields a minimum of 648 specifications across six dimensions: heterogeneity estimator (6 options: FE/DL/REML/PM/SJ/ML), confidence interval method (3 options: Wald/HKSJ/t-distribution), bias correction (4 options: none/trim-and-fill/PET-PEESE/selection model), quality filter (3 options), design filter (3 options), and leave-one-out sensitivity. Robustness was quantified by a concordance score (C_sig) representing the proportion of specifications yielding a statistically significant result in the same direction as the primary estimate, and classified into four tiers: ROBUST (C_sig ≥ 0.90), MODERATE (0.70 ≤ C_sig < 0.90), FRAGILE (0.50 ≤ C_sig < 0.70), and UNSTABLE (C_sig < 0.50).
 
-**Results:** Of 403 Cochrane reviews processed (98 excluded for unreadable data), 130 (32.3%) were classified ROBUST, 112 (27.8%) MODERATE, 147 (36.5%) FRAGILE, and 14 (3.5%) UNSTABLE. In total, 161 reviews (40.0%) fell in the FRAGILE or UNSTABLE tiers. The mean C_sig was 0.763 (SD 0.183; median 0.739; interquartile range 0.647–1.000). Bias correction was the dominant source of variance in 399 of 403 reviews (99.0%), with a mean dominant η² of 0.929. Prediction intervals crossed the null in a mean of 84.6% of specifications per review, and in at least half of specifications in 347 reviews (86.1%).
+**Results:** Of 403 Cochrane reviews processed (98 excluded for unreadable data), 130 (32.3%) were classified ROBUST, 112 (27.8%) MODERATE, 147 (36.5%) FRAGILE, and 14 (3.5%) UNSTABLE. In total, 161 reviews (40.0%) fell in the FRAGILE or UNSTABLE tiers. The mean C_sig was 0.763 (SD 0.183; median 0.739; interquartile range 0.647–1.000). Bias correction was the dominant source of variance in 399 of 403 reviews (99.0%), with a mean dominant η² of 0.929. Prediction intervals crossed the null in a mean of 84.6% of specifications per review (median 95.7%), and in at least half of specifications in 347 reviews (86.1%).
 
 **Conclusion:** Four in ten Cochrane meta-analyses are analytically fragile: their conclusions change substantially depending on whether and how publication bias is addressed. MES provides a systematic framework for quantifying this sensitivity and for reporting evidence landscapes rather than single-model point estimates. MES is freely available at GITHUB_PLACEHOLDER.
 
@@ -62,7 +62,7 @@ The EXPLORE phase executes all combinations of defensible choices across six dim
 |-----------|--------|---------|
 | Heterogeneity estimator | 6 | Fixed-effect (FE), DerSimonian-Laird (DL), REML, Paule-Mandel (PM), Sidik-Jonkman (SJ), Maximum likelihood (ML) |
 | Confidence interval method | 3 | Wald, Hartung-Knapp-Sidik-Jonkman (HKSJ), t-distribution |
-| Bias correction | 3 | None, Trim-and-fill (Duval & Tweedie), PET-PEESE (Stanley & Doucouliagos) |
+| Bias correction | 4 | None, Trim-and-fill (Duval & Tweedie), PET-PEESE (Stanley & Doucouliagos), Selection model (Vevea & Hedges) |
 | Quality filter | 3 | All studies, low+some-concerns RoB only, low RoB only |
 | Design filter | 3 | All designs, RCTs+quasi-RCTs only, RCTs only |
 | Leave-one-out sensitivity | 2 | Enabled, disabled |
@@ -78,10 +78,10 @@ C_sig = (number of specifications with p < 0.05 and same direction) / (total spe
 C_sig ranges from 0 (all specifications disagree with the primary conclusion) to 1 (all specifications agree). A value of 1.0 indicates that the primary conclusion is invariant to analytical choice.
 
 **Robustness tiers.** Reviews are classified into four tiers based on C_sig:
-- ROBUST: C_sig ≥ 0.9
-- MODERATE: 0.65 ≤ C_sig < 0.9
-- FRAGILE: 0.5 ≤ C_sig < 0.65
-- UNSTABLE: C_sig < 0.5
+- ROBUST: C_sig ≥ 0.90
+- MODERATE: 0.70 ≤ C_sig < 0.90
+- FRAGILE: 0.50 ≤ C_sig < 0.70
+- UNSTABLE: C_sig < 0.50
 
 **Influence decomposition.** To identify which dimension drives variability, an η² statistic is computed for each dimension using a one-way analysis of variance of specification-level p-values. The dominant dimension is the one with the highest η², and dominant η² quantifies the proportion of cross-specification variance attributable to it.
 
@@ -110,8 +110,8 @@ Of 403 Cochrane reviews, 130 (32.3%) were classified ROBUST, 112 (27.8%) MODERAT
 | Tier | C_sig range | n | % | Mean C_sig |
 |------|------------|---|---|------------|
 | ROBUST | ≥ 0.90 | 130 | 32.3 | 0.989 |
-| MODERATE | 0.65–0.89 | 112 | 27.8 | 0.767 |
-| FRAGILE | 0.50–0.64 | 147 | 36.5 | 0.593 |
+| MODERATE | 0.70–0.89 | 112 | 27.8 | 0.767 |
+| FRAGILE | 0.50–0.69 | 147 | 36.5 | 0.593 |
 | UNSTABLE | < 0.50 | 14 | 3.5 | 0.428 |
 | **Total** | | **403** | **100.0** | **0.763** |
 
