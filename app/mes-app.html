@@ -3024,20 +3024,54 @@ function renderTab4(verdict, results) {
   const plotFont = { family: getCSSVar('--font') || 'Segoe UI, system-ui, sans-serif', color: getCSSVar('--text') || '#1a1a2e' };
   const plotBg = 'rgba(0,0,0,0)';
 
-  // Influence Sunburst
+  // Influence Sunburst — nested: inner ring = dimensions, outer ring = levels
   if (typeof Plotly !== 'undefined' && eta2Entries.length > 0) {
-    const sunLabels = eta2Entries.map(d => d[0]);
-    const sunValues = eta2Entries.map(d => Math.max(d[1], 0.001));
+    const dimColors = {
+      'estimator': '#4ecdc4',
+      'ciMethod': '#ff6b6b',
+      'biasCorrection': '#ffd93d',
+      'qualityFilter': '#c084fc',
+      'designFilter': '#22c55e',
+      'sensitivity': '#f97316'
+    };
+
+    const sunLabels = ['Influence'];
+    const sunParents = [''];
+    const sunValues = [0];
+    const sunColors = ['#1a1a2e'];
+
+    for (const [dim, eta] of eta2Entries) {
+      const niceName = dim.replace(/([A-Z])/g, ' $1').trim();
+      sunLabels.push(niceName);
+      sunParents.push('Influence');
+      sunValues.push(Math.max(eta, 0.001));
+      sunColors.push(dimColors[dim] || '#888');
+
+      // Outer ring: levels within this dimension
+      const levelCounts = {};
+      for (const r of results) {
+        const lev = r[dim];
+        if (lev !== undefined) levelCounts[lev] = (levelCounts[lev] || 0) + 1;
+      }
+      for (const [lev, count] of Object.entries(levelCounts)) {
+        sunLabels.push(lev);
+        sunParents.push(niceName);
+        sunValues.push(Math.max(eta, 0.001) * count / results.length);
+        sunColors.push(dimColors[dim] || '#888');
+      }
+    }
 
     Plotly.newPlot('influencePlot', [{
       type: 'sunburst',
       labels: sunLabels,
-      parents: sunLabels.map(() => ''),
+      parents: sunParents,
       values: sunValues,
-      textinfo: 'label+percent entry',
-      marker: { colors: ['#3b82f6', '#8b5cf6', '#06b6d4', '#f59e0b', '#ef4444'].slice(0, sunLabels.length) },
+      marker: { colors: sunColors },
+      textinfo: 'label+percent parent',
+      branchvalues: 'total',
+      insidetextorientation: 'radial',
     }], {
-      title: { text: 'Influence Decomposition', font: { size: 14, color: plotFont.color } },
+      title: { text: 'Influence Decomposition (\u03B7\u00B2)', font: { size: 14, color: plotFont.color } },
       margin: { l: 10, r: 10, t: 40, b: 10 },
       paper_bgcolor: plotBg,
       font: plotFont,
@@ -3157,7 +3191,7 @@ function renderTab5(verdict, studies, results, dossiers) {
 
   // TruthCert bundle data
   const bundleTimestamp = new Date().toISOString();
-  const bundleHash = fastHash(JSON.stringify({ studies, verdict: verdict.overallClass, cSig: verdict.overallCSig }));
+  const bundleHashInput = JSON.stringify({ studies, verdict: verdict.overallClass, cSig: verdict.overallCSig });
 
   el.innerHTML = `
     <div class="card" style="text-align:center;">
@@ -3226,7 +3260,7 @@ function renderTab5(verdict, studies, results, dossiers) {
         <tbody>
           <tr><td><strong>Certification</strong></td><td><span class="badge ${certBadgeClass}">${verdict.certification}</span></td></tr>
           <tr><td><strong>Timestamp</strong></td><td>${esc(bundleTimestamp)}</td></tr>
-          <tr><td><strong>Input hash</strong></td><td style="font-family:var(--mono);font-size:0.8rem;">${esc(bundleHash)}</td></tr>
+          <tr><td><strong>Input hash</strong></td><td id="certHashDisplay" style="font-family:var(--mono);font-size:0.8rem;">computing...</td></tr>
           <tr><td><strong>Studies</strong></td><td>${studies.length}</td></tr>
           <tr><td><strong>Specifications</strong></td><td>${results.length} total / ${feasible.length} feasible</td></tr>
           <tr><td><strong>Verdict</strong></td><td>${verdict.overallClass} (C_sig = ${verdict.overallCSig.toFixed(4)})</td></tr>
@@ -3234,6 +3268,7 @@ function renderTab5(verdict, studies, results, dossiers) {
       </table>
       <div class="btn-group" style="margin-top:12px;">
         <button class="btn btn-primary btn-sm" onclick="exportTruthCertBundle()">Export Bundle (JSON)</button>
+        <button class="btn btn-primary btn-sm" onclick="exportResultsCSV()">Export Multiverse Results (CSV)</button>
       </div>
     </div>
 
@@ -3244,6 +3279,12 @@ function renderTab5(verdict, studies, results, dossiers) {
 
   // Populate R parity comparison table
   populateRComparison(results);
+
+  // Async SHA-256 hash computation — updates DOM when ready
+  sha256(bundleHashInput).then(hash => {
+    const hashEl = document.getElementById('certHashDisplay');
+    if (hashEl) hashEl.textContent = hash;
+  });
 }
 
 /* =====================================================================
@@ -3413,21 +3454,20 @@ function showCopyFeedback(el) {
 
 
 /* =====================================================================
-   UTILITY: Simple hash for TruthCert
+   UTILITY: SHA-256 hash for TruthCert (Web Crypto API)
    ===================================================================== */
 
-// Non-cryptographic hash for v1.0; replace with SHA-256 for production
+async function sha256(text) {
+  const data = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Synchronous placeholder that returns a pending marker;
+// callers that need the hash should await sha256() directly.
 function fastHash(str) {
-  let h1 = 0xdeadbeef;
-  let h2 = 0x41c6ce57;
-  for (let i = 0; i < str.length; i++) {
-    const ch = str.charCodeAt(i);
-    h1 = Math.imul(h1 ^ ch, 2654435761);
-    h2 = Math.imul(h2 ^ ch, 1597334677);
-  }
-  h1 = Math.imul(h1 ^ (h1 >>> 16), 2246822507) ^ Math.imul(h2 ^ (h2 >>> 13), 3266489909);
-  h2 = Math.imul(h2 ^ (h2 >>> 16), 2246822507) ^ Math.imul(h1 ^ (h1 >>> 13), 3266489909);
-  return (4294967296 * (2097151 & h2) + (h1 >>> 0)).toString(16);
+  return 'sha256-pending';
 }
 
 
@@ -3435,18 +3475,20 @@ function fastHash(str) {
    UTILITY: Export TruthCert Bundle
    ===================================================================== */
 
-function exportTruthCertBundle() {
+async function exportTruthCertBundle() {
   if (!appState.verdict || !appState.results || !appState.dossiers) {
     showError('No analysis results to export.');
     return;
   }
+
+  const inputHash = await sha256(JSON.stringify(appState.dossiers.map(d => ({ yi: d.yi, vi: d.vi, id: d.studyId }))));
 
   const bundle = {
     truthcert: {
       version: '1.0',
       tool: 'MES - Multiverse Evidence Synthesis',
       timestamp: new Date().toISOString(),
-      inputHash: fastHash(JSON.stringify(appState.dossiers.map(d => ({ yi: d.yi, vi: d.vi, id: d.studyId })))),
+      inputHash: inputHash,
     },
     input: {
       studies: appState.dossiers.map(d => ({
@@ -3495,12 +3537,55 @@ function exportTruthCertBundle() {
     })),
   };
 
+  const bundleJson = JSON.stringify(bundle, null, 2);
+  const bundleHash = await sha256(bundleJson);
+  bundle.truthcert.bundleHash = bundleHash;
+
   const json = JSON.stringify(bundle, null, 2);
   const blob = new Blob([json], { type: 'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.href = url;
   a.download = 'mes-truthcert-bundle.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+
+/* =====================================================================
+   UTILITY: Export Multiverse Results as CSV
+   ===================================================================== */
+
+function exportResultsCSV() {
+  const results = appState.results;
+  if (!results || results.length === 0) { showError('Run analysis first'); return; }
+
+  const headers = ['specId','estimator','ciMethod','biasCorrection','qualityFilter',
+                   'designFilter','sensitivity','theta','se','ciLo','ciHi','pValue',
+                   'tau2','I2','k','piLo','piHi','significant','direction'];
+
+  let csv = headers.join(',') + '\n';
+  for (const r of results) {
+    const row = headers.map(h => {
+      let val = r[h];
+      if (val === undefined || val === null) return '';
+      if (typeof val === 'string') {
+        // CSV formula injection prevention (but don't strip minus for numbers)
+        if (/^[=+@\t\r]/.test(val)) val = "'" + val;
+        return '"' + val.replace(/"/g, '""') + '"';
+      }
+      return val;
+    });
+    csv += row.join(',') + '\n';
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mes_multiverse_results.csv';
   document.body.appendChild(a);
   a.click();
   document.body.removeChild(a);
