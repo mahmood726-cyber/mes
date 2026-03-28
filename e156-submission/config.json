@@ -1,0 +1,58 @@
+{
+  "title": "Multiverse Evidence Synthesis: Robustness Classification of 403 Cochrane Meta-Analyses Across 648 Analytical Specifications",
+  "slug": "mes-multiverse-evidence-synthesis",
+  "author": "Mahmood Ahmad",
+  "date": "2026-03-26",
+  "path": "C:\\Models\\MES",
+  "type": "methods",
+  "primary_estimand": "Concordance score (C_sig) across specification multiverse",
+  "certainty": "high",
+  "summary": "MES explored 648+ analytical specifications per review across 403 Cochrane meta-analyses, finding 40% Fragile or Unstable with bias correction driving 99% of conclusion variance.",
+  "body": "Do meta-analysis conclusions change when all defensible analytical specifications are explored systematically rather than a single model reported? The Multiverse Evidence Synthesis framework was validated on 403 Cochrane systematic reviews from the Pairwise70 dataset, each containing three or more eligible studies. The three-phase ASSESS-EXPLORE-MAP pipeline executes 648 or more specifications per review across six dimensions: heterogeneity estimator, confidence interval method, bias correction, quality filter, design filter, and leave-one-out sensitivity. The mean concordance score was 0.763 (SD 0.183, IQR 0.647 to 1.000), with 161 reviews (40.0%) classified as Fragile or Unstable across the robustness tiers. Bias correction was the dominant variance source in 399 of 403 reviews (99.0%), with a mean dominant eta-squared of 0.929 explaining nearly all specification variance. MES replaces single-model point estimates with robustness-classified evidence landscapes, revealing how much of the analytical space supports each conclusion. The framework is limited to pairwise comparisons and cannot currently accommodate network meta-analysis or diagnostic test accuracy specifications.",
+  "sentences": [
+    {
+      "role": "Question",
+      "text": "Do meta-analysis conclusions change when all defensible analytical specifications are explored systematically rather than a single model reported?"
+    },
+    {
+      "role": "Dataset",
+      "text": "The Multiverse Evidence Synthesis framework was validated on 403 Cochrane systematic reviews from the Pairwise70 dataset, each containing three or more eligible studies."
+    },
+    {
+      "role": "Method",
+      "text": "The three-phase ASSESS-EXPLORE-MAP pipeline executes 648 or more specifications per review across six dimensions: heterogeneity estimator, confidence interval method, bias correction, quality filter, design filter, and leave-one-out sensitivity."
+    },
+    {
+      "role": "Primary result",
+      "text": "The mean concordance score was 0.763 (SD 0.183, IQR 0.647 to 1.000), with 161 reviews (40.0%) classified as Fragile or Unstable across the robustness tiers."
+    },
+    {
+      "role": "Robustness",
+      "text": "Bias correction was the dominant variance source in 399 of 403 reviews (99.0%), with a mean dominant eta-squared of 0.929 explaining nearly all specification variance."
+    },
+    {
+      "role": "Interpretation",
+      "text": "MES replaces single-model point estimates with robustness-classified evidence landscapes, revealing how much of the analytical space supports each conclusion."
+    },
+    {
+      "role": "Boundary",
+      "text": "The framework is limited to pairwise comparisons and cannot currently accommodate network meta-analysis or diagnostic test accuracy specifications."
+    }
+  ],
+  "notes": {
+    "app": "MES Engine v1.0",
+    "data": "403 Cochrane systematic reviews (Pairwise70 dataset)",
+    "code": "https://github.com/mahmood726-cyber/mes",
+    "doi": "",
+    "version": "1.0",
+    "date": "2026-03-26",
+    "validation": "DRAFT"
+  },
+  "affiliation": "Tahir Heart Institute",
+  "email": "mahmood.ahmad2@nhs.net",
+  "references": [
+    "Walsh M, Srinathan SK, McAuley DF, et al. The statistical significance of randomized controlled trial results is frequently fragile: a case for a Fragility Index. J Clin Epidemiol. 2014;67(6):622-628.",
+    "Atal I, Porcher R, Boutron I, Ravaud P. The statistical significance of meta-analyses is frequently fragile: definition of a fragility index for meta-analyses. J Clin Epidemiol. 2019;111:32-40.",
+    "Borenstein M, Hedges LV, Higgins JPT, Rothstein HR. Introduction to Meta-Analysis. 2nd ed. Wiley; 2021."
+  ]
+}

@@ -1,0 +1,96 @@
+{
+  "title": "Multiverse Evidence Synthesis: Robustness Classification of 403 Cochrane Meta-Analyses Across 648 Analytical Specifications",
+  "slug": "mes-multiverse-evidence-synthesis",
+  "author": "Mahmood Ahmad",
+  "date": "2026-03-26",
+  "body": "Do meta-analysis conclusions change when all defensible analytical specifications are explored systematically rather than a single model reported? The Multiverse Evidence Synthesis framework was validated on 403 Cochrane systematic reviews from the Pairwise70 dataset, each containing three or more eligible studies. The three-phase ASSESS-EXPLORE-MAP pipeline executes 648 or more specifications per review across six dimensions: heterogeneity estimator, confidence interval method, bias correction, quality filter, design filter, and leave-one-out sensitivity. The mean concordance score was 0.763 (SD 0.183, IQR 0.647 to 1.000), with 161 reviews (40.0%) classified as Fragile or Unstable across the robustness tiers. Bias correction was the dominant variance source in 399 of 403 reviews (99.0%), with a mean dominant eta-squared of 0.929 explaining nearly all specification variance. MES replaces single-model point estimates with robustness-classified evidence landscapes, revealing how much of the analytical space supports each conclusion. The framework is limited to pairwise comparisons and cannot currently accommodate network meta-analysis or diagnostic test accuracy specifications.",
+  "word_count": 156,
+  "sentence_count": 7,
+  "sentences": [
+    {
+      "role": "Question",
+      "text": "Do meta-analysis conclusions change when all defensible analytical specifications are explored systematically rather than a single model reported?"
+    },
+    {
+      "role": "Dataset",
+      "text": "The Multiverse Evidence Synthesis framework was validated on 403 Cochrane systematic reviews from the Pairwise70 dataset, each containing three or more eligible studies."
+    },
+    {
+      "role": "Method",
+      "text": "The three-phase ASSESS-EXPLORE-MAP pipeline executes 648 or more specifications per review across six dimensions: heterogeneity estimator, confidence interval method, bias correction, quality filter, design filter, and leave-one-out sensitivity."
+    },
+    {
+      "role": "Primary result",
+      "text": "The mean concordance score was 0.763 (SD 0.183, IQR 0.647 to 1.000), with 161 reviews (40.0%) classified as Fragile or Unstable across the robustness tiers."
+    },
+    {
+      "role": "Robustness",
+      "text": "Bias correction was the dominant variance source in 399 of 403 reviews (99.0%), with a mean dominant eta-squared of 0.929 explaining nearly all specification variance."
+    },
+    {
+      "role": "Interpretation",
+      "text": "MES replaces single-model point estimates with robustness-classified evidence landscapes, revealing how much of the analytical space supports each conclusion."
+    },
+    {
+      "role": "Boundary",
+      "text": "The framework is limited to pairwise comparisons and cannot currently accommodate network meta-analysis or diagnostic test accuracy specifications."
+    }
+  ],
+  "notes": {
+    "app": "MES Engine v1.0",
+    "data": "403 Cochrane systematic reviews (Pairwise70 dataset)",
+    "code": "https://github.com/mahmood726-cyber/mes",
+    "doi": "",
+    "version": "1.0",
+    "date": "2026-03-26",
+    "validation": "DRAFT"
+  },
+  "type": "methods",
+  "primary_estimand": "Concordance score (C_sig) across specification multiverse",
+  "validation": {
+    "status": "pass",
+    "checks": [
+      {
+        "name": "single paragraph",
+        "ok": true,
+        "detail": "Body must not contain blank-line paragraph breaks."
+      },
+      {
+        "name": "sentence count",
+        "ok": true,
+        "detail": "Found 7 sentences."
+      },
+      {
+        "name": "word count",
+        "ok": true,
+        "detail": "Found 156 words."
+      },
+      {
+        "name": "no headings",
+        "ok": true,
+        "detail": "No markdown headings allowed in body."
+      },
+      {
+        "name": "no links",
+        "ok": true,
+        "detail": "No links or DOI links allowed in body."
+      },
+      {
+        "name": "result sentence has interval",
+        "ok": true,
+        "detail": "Sentence 4 should include a confidence interval."
+      },
+      {
+        "name": "result sentence has estimand",
+        "ok": true,
+        "detail": "Sentence 4 should name an effect measure or test metric."
+      },
+      {
+        "name": "boundary sentence present",
+        "ok": true,
+        "detail": "Sentence 7 should express a limitation, harm, or scope boundary."
+      }
+    ]
+  },
+  "schema": "e156-v0.2"
+}

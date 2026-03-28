@@ -1,0 +1,3743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MES — Multiverse Evidence Synthesis</title>
+  <script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
+  <style>
+/* ===================================================================
+   CSS VARIABLES & THEMING
+   =================================================================== */
+:root {
+  --bg: #f5f6fa;
+  --bg-card: #ffffff;
+  --text: #1a1a2e;
+  --text-muted: #6b7280;
+  --accent: #2563eb;
+  --accent-hover: #1d4ed8;
+  --accent-light: #dbeafe;
+  --border: #e5e7eb;
+  --border-focus: #2563eb;
+  --success: #059669;
+  --success-bg: #d1fae5;
+  --warning: #d97706;
+  --warning-bg: #fef3c7;
+  --danger: #dc2626;
+  --danger-bg: #fee2e2;
+  --info: #2563eb;
+  --info-bg: #dbeafe;
+  --shadow: 0 1px 3px rgba(0,0,0,0.1), 0 1px 2px rgba(0,0,0,0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1), 0 4px 6px -2px rgba(0,0,0,0.05);
+  --radius: 8px;
+  --radius-lg: 12px;
+  --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+  --mono: 'Cascadia Code', 'Fira Code', 'Consolas', monospace;
+  --transition: 0.2s ease;
+}
+
+body.dark {
+  --bg: #0f172a;
+  --bg-card: #1e293b;
+  --text: #e2e8f0;
+  --text-muted: #94a3b8;
+  --accent: #3b82f6;
+  --accent-hover: #60a5fa;
+  --accent-light: #1e3a5f;
+  --border: #334155;
+  --border-focus: #3b82f6;
+  --shadow: 0 1px 3px rgba(0,0,0,0.3);
+  --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.4);
+  --success-bg: #064e3b;
+  --warning-bg: #78350f;
+  --danger-bg: #7f1d1d;
+  --info-bg: #1e3a5f;
+}
+
+/* ===================================================================
+   RESET & LAYOUT
+   =================================================================== */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: var(--font);
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+/* ===================================================================
+   HEADER
+   =================================================================== */
+header {
+  background: var(--bg-card);
+  border-bottom: 1px solid var(--border);
+  padding: 12px 0;
+  box-shadow: var(--shadow);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+header .container {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--accent);
+  letter-spacing: -0.5px;
+}
+
+.logo span { color: var(--text-muted); font-weight: 400; font-size: 0.9rem; margin-left: 8px; }
+
+.header-controls { display: flex; gap: 8px; align-items: center; }
+
+.btn-icon {
+  background: none;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 6px 10px;
+  cursor: pointer;
+  color: var(--text-muted);
+  font-size: 1rem;
+  transition: var(--transition);
+}
+.btn-icon:hover { background: var(--accent-light); color: var(--accent); border-color: var(--accent); }
+
+/* ===================================================================
+   TAB BAR
+   =================================================================== */
+.tab-bar {
+  background: var(--bg-card);
+  border-bottom: 2px solid var(--border);
+  display: flex;
+  gap: 0;
+  overflow-x: auto;
+  padding: 0 20px;
+}
+
+.tab-btn {
+  background: none;
+  border: none;
+  padding: 12px 20px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -2px;
+  white-space: nowrap;
+  transition: var(--transition);
+  font-family: var(--font);
+}
+.tab-btn:hover { color: var(--accent); background: var(--accent-light); }
+.tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 600; }
+.tab-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* ===================================================================
+   TAB PANELS
+   =================================================================== */
+.tab-panel { display: none; padding: 24px 0; }
+.tab-panel.active { display: block; }
+
+/* ===================================================================
+   CARDS
+   =================================================================== */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 20px 24px;
+  box-shadow: var(--shadow);
+  margin-bottom: 16px;
+}
+
+.card-title {
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin-bottom: 12px;
+  color: var(--text);
+}
+
+.card-subtitle {
+  font-size: 0.85rem;
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+/* ===================================================================
+   BUTTONS
+   =================================================================== */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: var(--transition);
+  font-family: var(--font);
+  background: var(--bg-card);
+  color: var(--text);
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+
+.btn-primary {
+  background: var(--accent);
+  color: #fff;
+  border-color: var(--accent);
+}
+.btn-primary:hover { background: var(--accent-hover); color: #fff; }
+
+.btn-danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: var(--danger);
+}
+.btn-danger:hover { opacity: 0.9; color: #fff; }
+
+.btn-sm { padding: 4px 10px; font-size: 0.8rem; }
+
+.btn-group { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+
+/* ===================================================================
+   DATA TABLE
+   =================================================================== */
+.table-wrapper {
+  overflow-x: auto;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+}
+
+.data-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.85rem;
+}
+
+.data-table thead { background: var(--accent-light); position: sticky; top: 0; z-index: 2; }
+
+.data-table th {
+  padding: 10px 12px;
+  text-align: left;
+  font-weight: 600;
+  color: var(--accent);
+  border-bottom: 2px solid var(--border);
+  white-space: nowrap;
+}
+
+.data-table td {
+  padding: 6px 12px;
+  border-bottom: 1px solid var(--border);
+  vertical-align: middle;
+}
+
+.data-table tbody tr:hover { background: var(--accent-light); }
+
+.data-table input[type="text"],
+.data-table input[type="number"] {
+  width: 100%;
+  min-width: 70px;
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  font-family: var(--mono);
+  background: var(--bg);
+  color: var(--text);
+}
+.data-table input:focus { outline: none; border-color: var(--border-focus); box-shadow: 0 0 0 2px var(--accent-light); }
+
+.data-table select {
+  padding: 4px 6px;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.85rem;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.row-num { color: var(--text-muted); font-family: var(--mono); font-size: 0.75rem; min-width: 30px; text-align: center; }
+
+.btn-remove-row {
+  background: none;
+  border: none;
+  color: var(--danger);
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+.btn-remove-row:hover { background: var(--danger-bg); }
+
+/* ===================================================================
+   TRAFFIC LIGHT (Robustness Indicator)
+   =================================================================== */
+.traffic-light {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  padding: 24px;
+}
+
+.traffic-circle {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: #fff;
+  box-shadow: var(--shadow-lg);
+}
+
+.traffic-circle.robust { background: var(--success); }
+.traffic-circle.moderate { background: var(--warning); }
+.traffic-circle.fragile { background: #f97316; }
+.traffic-circle.unstable { background: var(--danger); }
+
+.traffic-label {
+  font-size: 1.3rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.traffic-label.robust { color: var(--success); }
+.traffic-label.moderate { color: var(--warning); }
+.traffic-label.fragile { color: #f97316; }
+.traffic-label.unstable { color: var(--danger); }
+
+/* ===================================================================
+   BADGES
+   =================================================================== */
+.badge {
+  display: inline-block;
+  padding: 2px 8px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.badge-success { background: var(--success-bg); color: var(--success); }
+.badge-warning { background: var(--warning-bg); color: var(--warning); }
+.badge-danger  { background: var(--danger-bg);  color: var(--danger); }
+.badge-info    { background: var(--info-bg);    color: var(--info); }
+
+/* ===================================================================
+   PROGRESS OVERLAY
+   =================================================================== */
+.progress-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.progress-overlay.show { display: flex; }
+
+.progress-box {
+  background: var(--bg-card);
+  padding: 32px 48px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  text-align: center;
+  max-width: 400px;
+}
+
+.progress-spinner {
+  width: 40px;
+  height: 40px;
+  border: 4px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+  margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.progress-text { font-weight: 500; color: var(--text); }
+
+/* ===================================================================
+   ERROR TOAST
+   =================================================================== */
+.toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background: var(--danger);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: var(--radius);
+  box-shadow: var(--shadow-lg);
+  z-index: 2000;
+  max-width: 400px;
+  display: none;
+  animation: slideIn 0.3s ease;
+}
+.toast.show { display: block; }
+.toast.toast-success { background: var(--success); }
+@keyframes slideIn { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+/* ===================================================================
+   METRICS GRID
+   =================================================================== */
+.metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.metric-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 16px;
+  text-align: center;
+}
+
+.metric-value {
+  font-size: 1.8rem;
+  font-weight: 700;
+  color: var(--accent);
+  font-family: var(--mono);
+}
+
+.metric-label {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+}
+
+/* ===================================================================
+   INLINE FORMS
+   =================================================================== */
+.form-row {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.form-row label {
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  min-width: 100px;
+}
+
+.form-row select,
+.form-row input[type="file"] {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  font-size: 0.85rem;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* ===================================================================
+   STUDY COUNT
+   =================================================================== */
+.study-count {
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+.study-count strong { color: var(--accent); font-family: var(--mono); }
+
+/* ===================================================================
+   RESPONSIVE
+   =================================================================== */
+@media (max-width: 768px) {
+  .tab-btn { padding: 10px 12px; font-size: 0.8rem; }
+  .card { padding: 16px; }
+  .container { padding: 0 12px; }
+  .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+/* ===================================================================
+   ABOUT MODAL
+   =================================================================== */
+.about-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.5);
+  z-index: 1500;
+  align-items: center;
+  justify-content: center;
+}
+.about-overlay.show { display: flex; }
+
+.about-box {
+  background: var(--bg-card);
+  padding: 32px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  max-width: 520px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+}
+
+.about-box h2 { font-size: 1.4rem; font-weight: 700; color: var(--accent); margin-bottom: 4px; }
+.about-box .about-version { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 16px; }
+.about-box p { font-size: 0.9rem; line-height: 1.6; margin-bottom: 12px; color: var(--text); }
+.about-box .about-section-title { font-weight: 600; font-size: 0.9rem; color: var(--accent); margin-bottom: 4px; margin-top: 16px; }
+.about-box .about-citation { font-family: var(--mono); font-size: 0.8rem; background: var(--bg); padding: 10px; border-radius: var(--radius); border: 1px solid var(--border); }
+
+.about-close {
+  position: absolute;
+  top: 12px;
+  right: 16px;
+  background: none;
+  border: none;
+  font-size: 1.3rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+.about-close:hover { background: var(--danger-bg); color: var(--danger); }
+
+/* ===================================================================
+   PRINT STYLES
+   =================================================================== */
+@media print {
+  header, .tab-bar, .btn-group, .form-row, .progress-overlay, .toast { display: none !important; }
+  .tab-panel { display: block !important; page-break-before: always; }
+  .tab-panel:first-child { page-break-before: auto; }
+  body { background: #fff; color: #000; }
+  .card { box-shadow: none; border: 1px solid #ccc; }
+}
+  </style>
+</head>
+<body>
+
+<!-- ===================================================================
+     HEADER
+     =================================================================== -->
+<header>
+  <div class="container">
+    <div class="logo">MES <span>Multiverse Evidence Synthesis v1.0</span></div>
+    <div class="header-controls">
+      <button class="btn-icon" id="aboutBtn" title="About MES" aria-label="About MES" onclick="openAboutModal()">&#9432;</button>
+      <button class="btn-icon" id="themeBtn" title="Toggle dark mode" aria-label="Toggle dark mode" onclick="toggleTheme()">&#9790;</button>
+    </div>
+  </div>
+</header>
+
+<!-- ===================================================================
+     TAB BAR
+     =================================================================== -->
+<nav class="tab-bar container" role="tablist" aria-label="Analysis steps">
+  <button class="tab-btn active" role="tab" data-tab="input" id="tabInput" aria-selected="true" aria-controls="inputPanel" onclick="switchTab('input')">1. Data Input</button>
+  <button class="tab-btn" role="tab" data-tab="assess" id="tabAssess" aria-selected="false" aria-controls="assessPanel" onclick="switchTab('assess')" disabled>2. Evidence Assessment</button>
+  <button class="tab-btn" role="tab" data-tab="explore" id="tabExplore" aria-selected="false" aria-controls="explorePanel" onclick="switchTab('explore')" disabled>3. Multiverse Explorer</button>
+  <button class="tab-btn" role="tab" data-tab="landscape" id="tabLandscape" aria-selected="false" aria-controls="landscapePanel" onclick="switchTab('landscape')" disabled>4. Evidence Landscape</button>
+  <button class="tab-btn" role="tab" data-tab="report" id="tabReport" aria-selected="false" aria-controls="reportPanel" onclick="switchTab('report')" disabled>5. Report &amp; Certify</button>
+</nav>
+
+<!-- ===================================================================
+     MAIN CONTENT
+     =================================================================== -->
+<main class="container">
+
+  <!-- =================================================================
+       TAB 1 — DATA INPUT
+       ================================================================= -->
+  <div class="tab-panel active" id="inputPanel" role="tabpanel" aria-labelledby="tabInput">
+
+    <div class="card">
+      <div class="card-title">Load Built-in Dataset</div>
+      <div class="form-row">
+        <label for="datasetSelect">Dataset:</label>
+        <select id="datasetSelect">
+          <option value="">-- Select --</option>
+          <option value="bcg">BCG Vaccine (13 studies, logRR)</option>
+          <option value="robust">Robust Example (61 studies, logOR)</option>
+          <option value="fragile">Fragile Example (14 studies, logOR)</option>
+          <option value="unstable">Unstable Example (5 studies, logOR)</option>
+        </select>
+        <button class="btn btn-primary" id="loadDatasetBtn" aria-label="Load selected dataset" onclick="loadBuiltIn()">Load</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Import CSV</div>
+      <div class="card-subtitle">CSV must have columns for study ID, effect size (yi), and variance (vi). Headers are fuzzy-matched.</div>
+      <div class="form-row">
+        <input type="file" id="csvFile" accept=".csv,.tsv,.txt">
+        <button class="btn" id="importCsvBtn" aria-label="Import CSV file" onclick="importCSV()">Import</button>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Study Data</div>
+      <div class="study-count">Studies: <strong id="studyCount">0</strong></div>
+      <div class="btn-group" style="margin-bottom: 12px;">
+        <button class="btn btn-sm" id="addRowBtn" aria-label="Add a new study row" onclick="addRow()">+ Add Row</button>
+        <button class="btn btn-sm btn-danger" id="clearAllBtn" aria-label="Clear all study data" onclick="clearTable()">Clear All</button>
+      </div>
+      <div class="table-wrapper">
+        <table class="data-table" id="dataTable">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Study ID</th>
+              <th>yi (effect)</th>
+              <th>vi (variance)</th>
+              <th>Design</th>
+              <th>RoB Overall</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="dataBody">
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card" style="text-align: center;">
+      <button class="btn btn-primary" style="font-size: 1.1rem; padding: 12px 32px;" onclick="runAnalysis()" id="runBtn" aria-label="Run MES Analysis">
+        Run MES Analysis
+      </button>
+      <label style="margin-left:16px;font-size:0.9rem;cursor:pointer;">
+        <input type="checkbox" id="looCheckbox" style="margin-right:4px;"> Include Leave-One-Out Sensitivity
+      </label>
+    </div>
+  </div>
+
+  <!-- =================================================================
+       TAB 2 — EVIDENCE ASSESSMENT
+       ================================================================= -->
+  <div class="tab-panel" id="assessPanel" role="tabpanel" aria-labelledby="tabAssess">
+    <div id="assessContent">
+      <p style="color: var(--text-muted);">Run analysis to see results.</p>
+    </div>
+  </div>
+
+  <!-- =================================================================
+       TAB 3 — MULTIVERSE EXPLORER
+       ================================================================= -->
+  <div class="tab-panel" id="explorePanel" role="tabpanel" aria-labelledby="tabExplore">
+    <div id="exploreContent">
+      <p style="color: var(--text-muted);">Run analysis to see results.</p>
+    </div>
+  </div>
+
+  <!-- =================================================================
+       TAB 4 — EVIDENCE LANDSCAPE
+       ================================================================= -->
+  <div class="tab-panel" id="landscapePanel" role="tabpanel" aria-labelledby="tabLandscape">
+    <div id="landscapeContent">
+      <p style="color: var(--text-muted);">Run analysis to see results.</p>
+    </div>
+  </div>
+
+  <!-- =================================================================
+       TAB 5 — REPORT & CERTIFY
+       ================================================================= -->
+  <div class="tab-panel" id="reportPanel" role="tabpanel" aria-labelledby="tabReport">
+    <div id="reportContent">
+      <p style="color: var(--text-muted);">Run analysis to see results.</p>
+    </div>
+  </div>
+
+</main>
+
+<!-- ===================================================================
+     ABOUT MODAL
+     =================================================================== -->
+<div class="about-overlay" id="aboutOverlay" role="dialog" aria-modal="true" aria-labelledby="aboutTitle">
+  <div class="about-box">
+    <button class="about-close" id="aboutCloseBtn" aria-label="Close About dialog" onclick="closeAboutModal()">&times;</button>
+    <h2 id="aboutTitle">About MES</h2>
+    <div class="about-version">v1.0.0</div>
+    <p>Multiverse Evidence Synthesis &mdash; replacing point estimates with evidence landscapes.</p>
+    <div class="about-section-title">Methodology</div>
+    <p>MES uses a three-phase approach: <strong>ASSESS</strong> builds evidence dossiers for each study (design tier, risk of bias, publication bias profile); <strong>EXPLORE</strong> executes hundreds of analytical specifications across estimator, CI method, bias correction, quality filter, and design filter dimensions; <strong>MAP</strong> synthesizes the multiverse into concordance metrics and a robustness verdict (Robust / Moderate / Fragile / Unstable).</p>
+    <div class="about-section-title">Author</div>
+    <p>AUTHOR_PLACEHOLDER</p>
+    <div class="about-section-title">Citation</div>
+    <div class="about-citation">Ahmad M. Multiverse Evidence Synthesis: replacing point estimates with evidence landscapes. BMJ. 2026.</div>
+  </div>
+</div>
+
+<!-- ===================================================================
+     PROGRESS OVERLAY
+     =================================================================== -->
+<div class="progress-overlay" id="progressOverlay">
+  <div class="progress-box">
+    <div class="progress-spinner"></div>
+    <div class="progress-text" id="progressText">Working...</div>
+  </div>
+</div>
+
+<!-- ===================================================================
+     ERROR TOAST
+     =================================================================== -->
+<div class="toast" id="errorToast"></div>
+<div class="toast toast-success" id="successToast"></div>
+
+<!-- ===================================================================
+     JAVASCRIPT ENGINE
+     =================================================================== -->
+<script>
+'use strict';
+
+/* =====================================================================
+   BUILT-IN DATASETS (embedded from JSON files)
+   ===================================================================== */
+const BUILT_IN = {
+  bcg: [
+    {"study_id":"Aronson1948","yi":-0.8893,"vi":0.3256,"measure":"logRR","design_type":"RCT","year":1948},
+    {"study_id":"Ferguson1949","yi":-1.5854,"vi":0.1946,"measure":"logRR","design_type":"RCT","year":1949},
+    {"study_id":"Rosenthal1960","yi":-1.3481,"vi":0.4154,"measure":"logRR","design_type":"RCT","year":1960},
+    {"study_id":"Hart1977","yi":-1.4416,"vi":0.0200,"measure":"logRR","design_type":"RCT","year":1977},
+    {"study_id":"Frimodt1973","yi":-0.2175,"vi":0.0512,"measure":"logRR","design_type":"RCT","year":1973},
+    {"study_id":"Stein1953","yi":-0.7861,"vi":0.0069,"measure":"logRR","design_type":"RCT","year":1953},
+    {"study_id":"Vandiviere1973","yi":-1.6209,"vi":0.2230,"measure":"logRR","design_type":"RCT","year":1973},
+    {"study_id":"TPT_Madras1980","yi":0.0120,"vi":0.0040,"measure":"logRR","design_type":"RCT","year":1980},
+    {"study_id":"Coetzee1968","yi":-0.4694,"vi":0.0564,"measure":"logRR","design_type":"RCT","year":1968},
+    {"study_id":"Comstock1974","yi":-1.3713,"vi":0.0730,"measure":"logRR","design_type":"RCT","year":1974},
+    {"study_id":"Comstock1976","yi":-0.3394,"vi":0.0124,"measure":"logRR","design_type":"RCT","year":1976},
+    {"study_id":"Comstock_etal1976","yi":0.4459,"vi":0.5325,"measure":"logRR","design_type":"RCT","year":1976},
+    {"study_id":"Shapiro1998","yi":-0.0173,"vi":0.0714,"measure":"logRR","design_type":"RCT","year":1998}
+  ],
+  robust: [
+    {"study_id":"Auvinen 2004","yi":-0.8860307192274209,"vi":0.026246973374747705,"measure":"logOR","design_type":"RCT","year":2004},
+    {"study_id":"Chen C 2021","yi":-0.2691966521612556,"vi":0.10862053617042709,"measure":"logOR","design_type":"RCT","year":2021},
+    {"study_id":"Davison 1997","yi":-1.2039728043259361,"vi":0.3666544195213201,"measure":"logOR","design_type":"RCT","year":1997},
+    {"study_id":"Dolan 2002","yi":0.15415096554150312,"vi":0.26300245700064184,"measure":"logOR","design_type":"RCT","year":2002},
+    {"study_id":"Kasper 2008","yi":-0.4741915865094762,"vi":0.2520003805058088,"measure":"logOR","design_type":"RCT","year":2008},
+    {"study_id":"Krist 2007","yi":-0.6039520230888965,"vi":0.10298958688852351,"measure":"logOR","design_type":"RCT","year":2007},
+    {"study_id":"Legare 2011","yi":-0.06591119615833461,"vi":0.053494945406402115,"measure":"logOR","design_type":"RCT","year":2010},
+    {"study_id":"Legare 2012","yi":-0.10174926629723605,"vi":0.020429665020731038,"measure":"logOR","design_type":"RCT","year":2012},
+    {"study_id":"Lewis 2021","yi":-0.2231435513142097,"vi":0.42498447263478806,"measure":"logOR","design_type":"RCT","year":2021},
+    {"study_id":"Man-Son-Hing 1999","yi":-0.2992797327406659,"vi":0.09182646139148684,"measure":"logOR","design_type":"RCT","year":1999},
+    {"study_id":"Mathers 2012","yi":-0.8711309591321194,"vi":0.16363795858372446,"measure":"logOR","design_type":"RCT","year":2012},
+    {"study_id":"Morgan 2000","yi":-0.3557382399258052,"vi":0.04337318283572299,"measure":"logOR","design_type":"RCT","year":2000},
+    {"study_id":"Murray 2001a","yi":0.05129369438747054,"vi":0.4116081292087362,"measure":"logOR","design_type":"RCT","year":2001},
+    {"study_id":"Murray 2001b","yi":-0.17173895062143582,"vi":0.34548992194849854,"measure":"logOR","design_type":"RCT","year":2001},
+    {"study_id":"Perestelo-Perez 2017","yi":0.3557922544829927,"vi":0.024462201688008396,"measure":"logOR","design_type":"RCT","year":2017},
+    {"study_id":"Sawka 2012","yi":-0.8109312162168287,"vi":0.3070458167867222,"measure":"logOR","design_type":"RCT","year":2012},
+    {"study_id":"Schonberg 2020","yi":-0.4643062899495121,"vi":0.04365692240215931,"measure":"logOR","design_type":"RCT","year":2020},
+    {"study_id":"Smith 2010","yi":1.2244325686014845,"vi":2.2770885233362113,"measure":"logOR","design_type":"RCT","year":2010},
+    {"study_id":"Stubenrouch 2022","yi":-0.4818543727396378,"vi":0.05938973951412915,"measure":"logOR","design_type":"RCT","year":2022},
+    {"study_id":"Vodermaier 2009","yi":-0.11483974638497532,"vi":0.0965386827631303,"measure":"logOR","design_type":"RCT","year":2009},
+    {"study_id":"Whelan 2003","yi":-0.564314308716977,"vi":0.22650262622641332,"measure":"logOR","design_type":"RCT","year":2003},
+    {"study_id":"Auvinen 2004b","yi":0.3561039809703946,"vi":0.07911182731076964,"measure":"logOR","design_type":"RCT","year":2004},
+    {"study_id":"Davison 1997b","yi":-0.4054646081082894,"vi":0.09999633932109794,"measure":"logOR","design_type":"RCT","year":1997},
+    {"study_id":"Dolan 2002b","yi":0.2047946348682108,"vi":0.03597866776391939,"measure":"logOR","design_type":"RCT","year":2002},
+    {"study_id":"Kasper 2008b","yi":-0.5767677962279896,"vi":0.07391894254059185,"measure":"logOR","design_type":"RCT","year":2008},
+    {"study_id":"Krist 2007b","yi":0.006216636610370435,"vi":0.032684969870493026,"measure":"logOR","design_type":"RCT","year":2007},
+    {"study_id":"Legare 2011b","yi":-0.14595336976608425,"vi":0.09836500822971121,"measure":"logOR","design_type":"RCT","year":2010},
+    {"study_id":"Legare 2012b","yi":0.2212874297859325,"vi":0.029927046803034808,"measure":"logOR","design_type":"RCT","year":2012},
+    {"study_id":"Lewis 2021b","yi":-1.2039728043259361,"vi":2.1221227072373305,"measure":"logOR","design_type":"RCT","year":2021},
+    {"study_id":"Man-Son-Hing 1999b","yi":-0.1140559897287552,"vi":0.036883672270270174,"measure":"logOR","design_type":"RCT","year":1999},
+    {"study_id":"Mathers 2012b","yi":-0.29131131686613304,"vi":0.05185584663530507,"measure":"logOR","design_type":"RCT","year":2012},
+    {"study_id":"Morgan 2000b","yi":0.18903066696452425,"vi":0.02785808641707028,"measure":"logOR","design_type":"RCT","year":2000},
+    {"study_id":"Murray 2001ab","yi":-0.38315973294688044,"vi":0.014843560725571182,"measure":"logOR","design_type":"RCT","year":2001},
+    {"study_id":"Murray 2001bb","yi":0.11594223130407513,"vi":0.03161207363077899,"measure":"logOR","design_type":"RCT","year":2001},
+    {"study_id":"Omaki 2021","yi":-0.29423952562952027,"vi":0.05302187091165747,"measure":"logOR","design_type":"RCT","year":2021},
+    {"study_id":"Perestelo-Perez 2017b","yi":0.11484895767855126,"vi":0.04283141147082992,"measure":"logOR","design_type":"RCT","year":2017},
+    {"study_id":"Sawka 2012b","yi":-0.23638837806431037,"vi":0.06524190210568317,"measure":"logOR","design_type":"RCT","year":2012},
+    {"study_id":"Smith 2010b","yi":0.49933121543852105,"vi":0.2502327329582106,"measure":"logOR","design_type":"RCT","year":2010},
+    {"study_id":"Stubenrouch 2022b","yi":0.02737097379610715,"vi":0.010256885489680947,"measure":"logOR","design_type":"RCT","year":2022},
+    {"study_id":"Vodermaier 2009b","yi":-0.009478782049782647,"vi":0.018962075789083176,"measure":"logOR","design_type":"RCT","year":2009},
+    {"study_id":"van Tol-Geerdink 2013","yi":0.13434818395964138,"vi":0.003316132494541277,"measure":"logOR","design_type":"RCT","year":2013},
+    {"study_id":"Allen 2018","yi":-0.04626176327061984,"vi":0.0038667499256607426,"measure":"logOR","design_type":"RCT","year":2018},
+    {"study_id":"Auvinen 2004c","yi":1.5574062402495883,"vi":0.11412543919598706,"measure":"logOR","design_type":"RCT","year":2004},
+    {"study_id":"Davison 1997c","yi":1.2237754316221157,"vi":0.19214988345020395,"measure":"logOR","design_type":"RCT","year":1997},
+    {"study_id":"Dolan 2002c","yi":-0.5108256237659907,"vi":0.13126114384864063,"measure":"logOR","design_type":"RCT","year":2002},
+    {"study_id":"Kasper 2008c","yi":0.09325260991301423,"vi":0.004225982329584526,"measure":"logOR","design_type":"RCT","year":2008},
+    {"study_id":"Krist 2007c","yi":0.14746437623661668,"vi":0.019569282566647417,"measure":"logOR","design_type":"RCT","year":2007},
+    {"study_id":"Legare 2011c","yi":0.11641053865758058,"vi":0.03234180539886142,"measure":"logOR","design_type":"RCT","year":2010},
+    {"study_id":"Legare 2012c","yi":-0.07961263350202569,"vi":0.0245781620120734,"measure":"logOR","design_type":"RCT","year":2012},
+    {"study_id":"Lewis 2021c","yi":0.8754687373538999,"vi":0.5083148671658958,"measure":"logOR","design_type":"RCT","year":2021},
+    {"study_id":"Man-Son-Hing 1999c","yi":0.12425007917929314,"vi":0.010115715319342453,"measure":"logOR","design_type":"RCT","year":1999},
+    {"study_id":"Mathers 2012c","yi":0.40304685315186517,"vi":0.023394794219543484,"measure":"logOR","design_type":"RCT","year":2012},
+    {"study_id":"Morgan 2000c","yi":0.2831038584048238,"vi":0.10798189189029626,"measure":"logOR","design_type":"RCT","year":2000},
+    {"study_id":"Murray 2001ac","yi":2.025374271798448,"vi":0.5171594237499816,"measure":"logOR","design_type":"RCT","year":2001},
+    {"study_id":"Murray 2001bc","yi":-0.06788919504763398,"vi":0.018110780487533076,"measure":"logOR","design_type":"RCT","year":2001},
+    {"study_id":"Perestelo-Perez 2017c","yi":-1.795972330881035,"vi":1.115464322872659,"measure":"logOR","design_type":"RCT","year":2017},
+    {"study_id":"Sawka 2012c","yi":0.6359888255435244,"vi":0.11587626492809446,"measure":"logOR","design_type":"RCT","year":2012},
+    {"study_id":"Smith 2010c","yi":-0.02230184774750535,"vi":0.00042768990836157094,"measure":"logOR","design_type":"RCT","year":2010},
+    {"study_id":"Stubenrouch 2022c","yi":0.22857915163588652,"vi":0.029910802856602848,"measure":"logOR","design_type":"RCT","year":2022},
+    {"study_id":"Vodermaier 2009c","yi":0.7118393876461693,"vi":0.7125879089031516,"measure":"logOR","design_type":"RCT","year":2009},
+    {"study_id":"Wallace 2021","yi":0.7884573603642703,"vi":0.35756248072312924,"measure":"logOR","design_type":"RCT","year":2021}
+  ],
+  fragile: [
+    {"study_id":"Ebner 2004","yi":0.07553966108356834,"vi":0.00509414888356647,"measure":"logOR","design_type":"RCT","year":2004},
+    {"study_id":"Hao 2016","yi":0.17208854432343604,"vi":0.08560334698350057,"measure":"logOR","design_type":"RCT","year":2016},
+    {"study_id":"Mateizel 2022","yi":0.07356360972966486,"vi":0.003519539773511681,"measure":"logOR","design_type":"RCT","year":2022},
+    {"study_id":"McCormick 2017","yi":-0.1079471915545932,"vi":0.0019560581533913076,"measure":"logOR","design_type":"RCT","year":2017},
+    {"study_id":"Okuyama 2019","yi":0.033149435573928854,"vi":0.003839190146094894,"measure":"logOR","design_type":"RCT","year":2019},
+    {"study_id":"Thondehal Math 2019","yi":0.030262438126888048,"vi":0.0042912590790707425,"measure":"logOR","design_type":"RCT","year":2019},
+    {"study_id":"Hao 2016b","yi":0.3313570333903347,"vi":0.020538246881158784,"measure":"logOR","design_type":"RCT","year":2016},
+    {"study_id":"Stecher 2013","yi":0.15522438890958748,"vi":0.002204769088969482,"measure":"logOR","design_type":"RCT","year":2013},
+    {"study_id":"Vanden Meerschaut 2012","yi":0.535276841369278,"vi":0.017562131737800687,"measure":"logOR","design_type":"RCT","year":2012},
+    {"study_id":"Al-Faqheri 2023","yi":0.024495519998170904,"vi":0.00810601574206348,"measure":"logOR","design_type":"RCT","year":2023},
+    {"study_id":"Aydinuraz 2016","yi":0.11934714513249102,"vi":0.005965733675153437,"measure":"logOR","design_type":"RCT","year":2016},
+    {"study_id":"Hao 2016c","yi":2.15948428781491,"vi":1.8759995309687876,"measure":"logOR","design_type":"RCT","year":2016},
+    {"study_id":"Mansour 2009","yi":0.1131849249739817,"vi":0.0007361896532786759,"measure":"logOR","design_type":"RCT","year":2009},
+    {"study_id":"Thondehal Math 2019b","yi":0.43582229705582565,"vi":0.00880485170459011,"measure":"logOR","design_type":"RCT","year":2019}
+  ],
+  unstable: [
+    {"study_id":"Sherman 2014a","yi":-1.169085183420799,"vi":0.09535658109228222,"measure":"logOR","design_type":"RCT","year":2014},
+    {"study_id":"Sherman 2014b","yi":-0.12145828110467974,"vi":0.023573453745625556,"measure":"logOR","design_type":"RCT","year":2014},
+    {"study_id":"Sherman 2014c","yi":-0.28467061145564726,"vi":0.033108808112015255,"measure":"logOR","design_type":"RCT","year":2014},
+    {"study_id":"Sherman 2014d","yi":-0.7012781474598756,"vi":0.05500089673304886,"measure":"logOR","design_type":"RCT","year":2014},
+    {"study_id":"Sherman 2014e","yi":-0.24929247380927144,"vi":0.029027759230124236,"measure":"logOR","design_type":"RCT","year":2014}
+  ]
+};
+
+
+/* =====================================================================
+   APP STATE
+   ===================================================================== */
+const appState = {
+  dossiers: null,
+  biasProfile: null,
+  results: null,
+  verdict: null,
+};
+
+const _plotEls = new Set();
+window.addEventListener('resize', () => {
+  _plotEls.forEach(el => { if (el && el.parentNode) Plotly.Plots.resize(el); });
+});
+
+
+/* =====================================================================
+   STATISTICAL UTILITIES
+   ===================================================================== */
+
+/**
+ * Standard normal CDF using Abramowitz & Stegun approximation (7.1.26).
+ * Max error ~1.5e-7.
+ */
+function normalCDF(x) {
+  if (x === 0) return 0.5;
+  const sign = x < 0 ? -1 : 1;
+  const t = 1.0 / (1.0 + 0.2316419 * Math.abs(x));
+  const d = 0.3989422804014327; // 1/sqrt(2*pi)
+  const p = d * Math.exp(-0.5 * x * x) *
+    (t * (0.319381530 + t * (-0.356563782 + t * (1.781477937 + t * (-1.821255978 + t * 1.330274429)))));
+  return sign < 0 ? p : 1.0 - p;
+}
+
+/**
+ * Standard normal quantile via Beasley-Springer-Moro (rational approximation).
+ */
+function normalQuantile(p) {
+  if (p <= 0) return -Infinity;
+  if (p >= 1) return Infinity;
+  if (p === 0.5) return 0;
+
+  // Rational approximation (Peter Acklam)
+  const a = [-3.969683028665376e+01, 2.209460984245205e+02,
+             -2.759285104469687e+02, 1.383577518672690e+02,
+             -3.066479806614716e+01, 2.506628277459239e+00];
+  const b = [-5.447609879822406e+01, 1.615858368580409e+02,
+             -1.556989798598866e+02, 6.680131188771972e+01,
+             -1.328068155288572e+01];
+  const c = [-7.784894002430293e-03, -3.223964580411365e-01,
+             -2.400758277161838e+00, -2.549732539343734e+00,
+              4.374664141464968e+00,  2.938163982698783e+00];
+  const d = [ 7.784695709041462e-03,  3.224671290700398e-01,
+              2.445134137142996e+00,  3.754408661907416e+00];
+
+  const pLow = 0.02425;
+  const pHigh = 1.0 - pLow;
+  let q, r;
+
+  if (p < pLow) {
+    q = Math.sqrt(-2 * Math.log(p));
+    return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+           ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  } else if (p <= pHigh) {
+    q = p - 0.5;
+    r = q * q;
+    return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5]) * q /
+           (((((b[0]*r+b[1])*r+b[2])*r+b[3])*r+b[4])*r+1);
+  } else {
+    q = Math.sqrt(-2 * Math.log(1 - p));
+    return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+            ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1);
+  }
+}
+
+/** Log-gamma via Lanczos approximation. */
+function lnGamma(x) {
+  if (x <= 0) return Infinity;
+  const g = 7;
+  const coef = [0.99999999999980993, 676.5203681218851, -1259.1392167224028,
+                771.32342877765313, -176.61502916214059, 12.507343278686905,
+                -0.13857109526572012, 9.9843695780195716e-6, 1.5056327351493116e-7];
+  let sum = coef[0];
+  for (let i = 1; i < g + 2; i++) {
+    sum += coef[i] / (x + i - 1);
+  }
+  const t = x + g - 0.5;
+  return 0.5 * Math.log(2 * Math.PI) + (x - 0.5) * Math.log(t) - t + Math.log(sum);
+}
+
+/**
+ * Regularized incomplete beta function I_x(a, b) via continued fraction.
+ */
+function betaIncomplete(a, b, x) {
+  if (x <= 0) return 0;
+  if (x >= 1) return 1;
+
+  const lnBeta = lnGamma(a) + lnGamma(b) - lnGamma(a + b);
+  const front = Math.exp(Math.log(x) * a + Math.log(1 - x) * b - lnBeta);
+
+  if (x < (a + 1) / (a + b + 2)) {
+    return front * betaCF(a, b, x) / a;
+  } else {
+    return 1 - front * betaCF(b, a, 1 - x) / b;
+  }
+}
+
+/** Continued fraction for beta incomplete. */
+function betaCF(a, b, x) {
+  const maxIter = 200;
+  const eps = 1e-14;
+  let qab = a + b;
+  let qap = a + 1;
+  let qam = a - 1;
+  let c = 1;
+  let d = 1 - qab * x / qap;
+  if (Math.abs(d) < 1e-30) d = 1e-30;
+  d = 1 / d;
+  let h = d;
+  for (let m = 1; m <= maxIter; m++) {
+    let m2 = 2 * m;
+    // Even step
+    let aa = m * (b - m) * x / ((qam + m2) * (a + m2));
+    d = 1 + aa * d;
+    if (Math.abs(d) < 1e-30) d = 1e-30;
+    c = 1 + aa / c;
+    if (Math.abs(c) < 1e-30) c = 1e-30;
+    d = 1 / d;
+    h *= d * c;
+    // Odd step
+    aa = -(a + m) * (qab + m) * x / ((a + m2) * (qap + m2));
+    d = 1 + aa * d;
+    if (Math.abs(d) < 1e-30) d = 1e-30;
+    c = 1 + aa / c;
+    if (Math.abs(c) < 1e-30) c = 1e-30;
+    d = 1 / d;
+    const del = d * c;
+    h *= del;
+    if (Math.abs(del - 1) < eps) break;
+  }
+  return h;
+}
+
+/**
+ * Student's t CDF using the regularized incomplete beta function.
+ */
+function tCDF(t, df) {
+  if (df <= 0) return NaN;
+  const x = df / (df + t * t);
+  const ib = betaIncomplete(df / 2, 0.5, x);
+  return t >= 0 ? 1 - 0.5 * ib : 0.5 * ib;
+}
+
+/**
+ * Student's t quantile via Newton-Raphson on tCDF.
+ */
+function tQuantile(p, df) {
+  if (p <= 0) return -Infinity;
+  if (p >= 1) return Infinity;
+  if (df <= 0) return NaN;
+  if (df > 1000) return normalQuantile(p); // Normal approximation for large df
+
+  // Initial guess from normal
+  let x = normalQuantile(p);
+  // Refine with Newton-Raphson
+  for (let i = 0; i < 30; i++) {
+    const cdfVal = tCDF(x, df);
+    const err = cdfVal - p;
+    if (Math.abs(err) < 1e-12) break;
+    // t-density
+    const lnPdf = lnGamma((df + 1) / 2) - lnGamma(df / 2) -
+                  0.5 * Math.log(df * Math.PI) - ((df + 1) / 2) * Math.log(1 + x * x / df);
+    const pdf = Math.exp(lnPdf);
+    if (pdf < 1e-30) break;
+    x -= err / pdf;
+  }
+  return x;
+}
+
+/**
+ * Chi-squared CDF via regularized incomplete gamma.
+ */
+function chi2CDF(x, df) {
+  if (x <= 0) return 0;
+  return gammaIncomplete(df / 2, x / 2);
+}
+
+/** Lower regularized incomplete gamma P(a, x) via series expansion. */
+function gammaIncomplete(a, x) {
+  if (x < 0) return 0;
+  if (x === 0) return 0;
+  if (x < a + 1) {
+    // Series
+    let sum = 1 / a;
+    let term = 1 / a;
+    for (let n = 1; n < 200; n++) {
+      term *= x / (a + n);
+      sum += term;
+      if (Math.abs(term) < Math.abs(sum) * 1e-14) break;
+    }
+    return sum * Math.exp(-x + a * Math.log(x) - lnGamma(a));
+  } else {
+    // Continued fraction
+    let f = 1e-30;
+    let c = 1e-30;
+    let d = 1 / (x + 1 - a);
+    let h = d;
+    for (let i = 1; i < 200; i++) {
+      const an = -i * (i - a);
+      const bn = x + 2 * i + 1 - a;
+      d = bn + an * d;
+      if (Math.abs(d) < 1e-30) d = 1e-30;
+      c = bn + an / c;
+      if (Math.abs(c) < 1e-30) c = 1e-30;
+      d = 1 / d;
+      const del = d * c;
+      h *= del;
+      if (Math.abs(del - 1) < 1e-14) break;
+    }
+    return 1 - Math.exp(-x + a * Math.log(x) - lnGamma(a)) * h;
+  }
+}
+
+/** Chi-squared survival function. */
+function chi2SF(x, df) {
+  return 1 - chi2CDF(x, df);
+}
+
+/** Kendall's tau rank correlation (for Begg test). */
+function kendallTau(x, y) {
+  const n = x.length;
+  if (n < 2) return { tau: 0, p: 1 };
+  let concordant = 0;
+  let discordant = 0;
+  for (let i = 0; i < n - 1; i++) {
+    for (let j = i + 1; j < n; j++) {
+      const dx = x[i] - x[j];
+      const dy = y[i] - y[j];
+      const prod = dx * dy;
+      if (prod > 0) concordant++;
+      else if (prod < 0) discordant++;
+    }
+  }
+  const nPairs = n * (n - 1) / 2;
+  const tau = (concordant - discordant) / nPairs;
+  // Normal approximation for p-value
+  const sd = Math.sqrt(2 * (2 * n + 5) / (9 * n * (n - 1)));
+  const z = tau / (sd > 1e-30 ? sd : 1e-30);
+  const p = 2 * (1 - normalCDF(Math.abs(z)));
+  return { tau, p };
+}
+
+
+/* =====================================================================
+   META-ANALYSIS ESTIMATORS (ported from estimators.py)
+   ===================================================================== */
+
+function poolEstimate(yi, vi, tau2) {
+  let sumW = 0, sumWY = 0;
+  for (let i = 0; i < yi.length; i++) {
+    const w = 1 / (vi[i] + tau2);
+    sumW += w;
+    sumWY += w * yi[i];
+  }
+  const theta = sumWY / sumW;
+  const se = 1 / Math.sqrt(sumW);
+  return { theta, se };
+}
+
+function dlTau2(yi, vi) {
+  const k = yi.length;
+  let sumW = 0, sumW2 = 0, sumWY = 0;
+  for (let i = 0; i < k; i++) {
+    const w = 1 / vi[i];
+    sumW += w;
+    sumW2 += w * w;
+    sumWY += w * yi[i];
+  }
+  const thetaFE = sumWY / sumW;
+  let Q = 0;
+  for (let i = 0; i < k; i++) {
+    const w = 1 / vi[i];
+    Q += w * (yi[i] - thetaFE) ** 2;
+  }
+  const C = sumW - sumW2 / sumW;
+  if (C <= 0) return 0;
+  return Math.max(0, (Q - (k - 1)) / C);
+}
+
+/** Fixed-Effect estimator. */
+function estFE(yi, vi) {
+  const { theta, se } = poolEstimate(yi, vi, 0);
+  return { tau2: 0, theta, se };
+}
+
+/** DerSimonian-Laird estimator. */
+function estDL(yi, vi) {
+  const tau2 = dlTau2(yi, vi);
+  const { theta, se } = poolEstimate(yi, vi, tau2);
+  return { tau2, theta, se };
+}
+
+/** REML via Fisher scoring. */
+function estREML(yi, vi, maxIter, tol) {
+  maxIter = maxIter ?? 100;
+  tol = tol ?? 1e-8;
+  const k = yi.length;
+  let tau2 = Math.max(0, dlTau2(yi, vi));
+
+  for (let iter = 0; iter < maxIter; iter++) {
+    let sumW = 0, sumW2 = 0, sumW3 = 0;
+    for (let i = 0; i < k; i++) {
+      const w = 1 / (vi[i] + tau2);
+      sumW += w;
+      sumW2 += w * w;
+      sumW3 += w * w * w;
+    }
+    const theta = (() => {
+      let s = 0;
+      for (let i = 0; i < k; i++) s += yi[i] / (vi[i] + tau2);
+      return s / sumW;
+    })();
+
+    let sumW2R2 = 0;
+    for (let i = 0; i < k; i++) {
+      const w = 1 / (vi[i] + tau2);
+      sumW2R2 += w * w * (yi[i] - theta) ** 2;
+    }
+
+    const gradient = -0.5 * sumW + 0.5 * sumW2R2 + 0.5 * sumW2 / sumW;
+    const fisherInfo = 0.5 * sumW2 - sumW3 / sumW + 0.5 * (sumW2 / sumW) ** 2;
+
+    if (fisherInfo <= 0) break;
+
+    const tau2New = Math.max(0, tau2 + gradient / fisherInfo);
+    if (Math.abs(tau2New - tau2) < tol) {
+      tau2 = tau2New;
+      break;
+    }
+    tau2 = tau2New;
+  }
+  const { theta, se } = poolEstimate(yi, vi, tau2);
+  return { tau2, theta, se };
+}
+
+/** Paule-Mandel iterative estimator. */
+function estPM(yi, vi, maxIter, tol) {
+  maxIter = maxIter ?? 100;
+  tol = tol ?? 1e-8;
+  const k = yi.length;
+  let tau2 = Math.max(0, dlTau2(yi, vi));
+
+  for (let iter = 0; iter < maxIter; iter++) {
+    let sumW = 0, sumW2 = 0;
+    for (let i = 0; i < k; i++) {
+      const w = 1 / (vi[i] + tau2);
+      sumW += w;
+      sumW2 += w * w;
+    }
+    const theta = (() => {
+      let s = 0;
+      for (let i = 0; i < k; i++) s += yi[i] / (vi[i] + tau2);
+      return s / sumW;
+    })();
+    let Q = 0;
+    for (let i = 0; i < k; i++) {
+      const w = 1 / (vi[i] + tau2);
+      Q += w * (yi[i] - theta) ** 2;
+    }
+
+    if (Math.abs(Q - (k - 1)) < tol) break;
+
+    const C = sumW - sumW2 / sumW;
+    if (C <= 0) break;
+
+    const tau2New = Math.max(0, tau2 + (Q - (k - 1)) / C);
+    if (Math.abs(tau2New - tau2) < tol) {
+      tau2 = tau2New;
+      break;
+    }
+    tau2 = tau2New;
+  }
+  const { theta, se } = poolEstimate(yi, vi, tau2);
+  return { tau2, theta, se };
+}
+
+/** Sidik-Jonkman one-step estimator. */
+function estSJ(yi, vi) {
+  const k = yi.length;
+  if (k < 2) {
+    const { theta, se } = poolEstimate(yi, vi, 0);
+    return { tau2: 0, theta, se };
+  }
+  // Population variance
+  let mean = 0;
+  for (let i = 0; i < k; i++) mean += yi[i];
+  mean /= k;
+  let tau2_0 = 0;
+  for (let i = 0; i < k; i++) tau2_0 += (yi[i] - mean) ** 2;
+  tau2_0 /= k;
+
+  // Q with weights from tau2_0
+  let sumW = 0, sumWY = 0;
+  for (let i = 0; i < k; i++) {
+    const w = 1 / (vi[i] + tau2_0);
+    sumW += w;
+    sumWY += w * yi[i];
+  }
+  const thetaTmp = sumWY / sumW;
+  let Q = 0;
+  for (let i = 0; i < k; i++) {
+    const w = 1 / (vi[i] + tau2_0);
+    Q += w * (yi[i] - thetaTmp) ** 2;
+  }
+
+  const tau2 = Math.max(0, tau2_0 * Q / (k - 1));
+  const { theta, se } = poolEstimate(yi, vi, tau2);
+  return { tau2, theta, se };
+}
+
+/** ML via Newton-Raphson. */
+function estML(yi, vi, maxIter, tol) {
+  maxIter = maxIter ?? 100;
+  tol = tol ?? 1e-8;
+  const k = yi.length;
+  let tau2 = Math.max(0, dlTau2(yi, vi));
+
+  for (let iter = 0; iter < maxIter; iter++) {
+    let sumW = 0, sumW2 = 0;
+    for (let i = 0; i < k; i++) {
+      const w = 1 / (vi[i] + tau2);
+      sumW += w;
+      sumW2 += w * w;
+    }
+    const theta = (() => {
+      let s = 0;
+      for (let i = 0; i < k; i++) s += yi[i] / (vi[i] + tau2);
+      return s / sumW;
+    })();
+
+    let sumW2R2 = 0;
+    for (let i = 0; i < k; i++) {
+      const w = 1 / (vi[i] + tau2);
+      sumW2R2 += w * w * (yi[i] - theta) ** 2;
+    }
+
+    const gradient = -0.5 * sumW + 0.5 * sumW2R2;
+    const fisherInfo = 0.5 * sumW2;
+
+    if (fisherInfo <= 0) break;
+
+    const tau2New = Math.max(0, tau2 + gradient / fisherInfo);
+    if (Math.abs(tau2New - tau2) < tol) {
+      tau2 = tau2New;
+      break;
+    }
+    tau2 = tau2New;
+  }
+  const { theta, se } = poolEstimate(yi, vi, tau2);
+  return { tau2, theta, se };
+}
+
+const ESTIMATORS = {
+  'FE': estFE,
+  'DL': estDL,
+  'REML': estREML,
+  'PM': estPM,
+  'SJ': estSJ,
+  'ML': estML,
+};
+
+
+/* =====================================================================
+   CI METHODS (ported from ci_methods.py)
+   ===================================================================== */
+
+function waldCI(theta, se, alpha) {
+  alpha = alpha ?? 0.05;
+  const z = normalQuantile(1 - alpha / 2);
+  const ciLo = theta - z * se;
+  const ciHi = theta + z * se;
+  const zStat = se > 1e-30 ? theta / se : 0;
+  const p = 2 * (1 - normalCDF(Math.abs(zStat)));
+  return { ciLo, ciHi, pValue: p };
+}
+
+function hksjCI(theta, se, yi, vi, tau2, k, alpha) {
+  alpha = alpha ?? 0.05;
+  if (k < 2) return waldCI(theta, se, alpha);
+
+  let sumQhat = 0;
+  for (let i = 0; i < yi.length; i++) {
+    const w = 1 / (vi[i] + tau2);
+    sumQhat += w * (yi[i] - theta) ** 2;
+  }
+  let qHat = sumQhat / (k - 1);
+  if (qHat < 1) qHat = 1; // floor at 1
+
+  const seAdj = se * Math.sqrt(qHat);
+  const tCrit = tQuantile(1 - alpha / 2, k - 1);
+  const ciLo = theta - tCrit * seAdj;
+  const ciHi = theta + tCrit * seAdj;
+  const tStat = seAdj > 1e-30 ? theta / seAdj : 0;
+  const p = 2 * (1 - tCDF(Math.abs(tStat), k - 1));
+  return { ciLo, ciHi, pValue: p };
+}
+
+function tdistCI(theta, se, k, alpha) {
+  alpha = alpha ?? 0.05;
+  if (k < 2) return waldCI(theta, se, alpha);
+
+  const tCrit = tQuantile(1 - alpha / 2, k - 1);
+  const ciLo = theta - tCrit * se;
+  const ciHi = theta + tCrit * se;
+  const tStat = se > 1e-30 ? theta / se : 0;
+  const p = 2 * (1 - tCDF(Math.abs(tStat), k - 1));
+  return { ciLo, ciHi, pValue: p };
+}
+
+
+/* =====================================================================
+   BIAS CORRECTIONS (ported from bias_corrections.py)
+   ===================================================================== */
+
+function wlsIntercept(y, x, w, n) {
+  const df = Math.max(1, n - 2);
+  let sw = 0, swx = 0, swy = 0, swxx = 0, swxy = 0;
+  for (let i = 0; i < n; i++) {
+    sw += w[i];
+    swx += w[i] * x[i];
+    swy += w[i] * y[i];
+    swxx += w[i] * x[i] * x[i];
+    swxy += w[i] * x[i] * y[i];
+  }
+  const denom = sw * swxx - swx * swx;
+  const scaleRef = Math.max(Math.abs(sw * swxx), Math.abs(swx * swx), 1e-30);
+  if (Math.abs(denom) < 1e-10 * scaleRef) {
+    const a = sw > 0 ? swy / sw : 0;
+    const seA = sw > 0 ? 1 / Math.sqrt(sw) : 1;
+    const ts = seA > 0 ? a / seA : 0;
+    const p = 2 * (1 - tCDF(Math.abs(ts), df));
+    return { a, seA, p };
+  }
+  const a = (swxx * swy - swx * swxy) / denom;
+  const b = (sw * swxy - swx * swy) / denom;
+  let ssResid = 0;
+  for (let i = 0; i < n; i++) {
+    const r = y[i] - (a + b * x[i]);
+    ssResid += w[i] * r * r;
+  }
+  const sigma2 = ssResid / Math.max(n - 2, 1);
+  const varA = sigma2 * swxx / denom;
+  const seA = Math.sqrt(Math.max(0, varA));
+  if (seA < 1e-30) return { a, seA: 1e-10, p: 1 };
+  const ts = a / seA;
+  const p = 2 * (1 - tCDF(Math.abs(ts), df));
+  return { a, seA, p };
+}
+
+function trimFill(yi, vi) {
+  const k = yi.length;
+  if (k < 5) return { k0: 0, thetaAdj: null, seAdj: null, yiAug: yi, viAug: vi };
+
+  const { tau2: tauInit, theta: thetaInit } = estDL(yi, vi);
+  // Determine side
+  let nRight = 0, nLeft = 0;
+  for (let i = 0; i < k; i++) {
+    const d = yi[i] - thetaInit;
+    if (d > 0) nRight++;
+    else if (d < 0) nLeft++;
+  }
+  const side = nRight > nLeft ? 'right' : 'left';
+
+  let yiCurr = yi.slice();
+  let viCurr = vi.slice();
+  let k0Prev = -1;
+  let k0 = 0;
+
+  for (let iter = 0; iter < 20; iter++) {
+    const { theta: theta0 } = estDL(yiCurr, viCurr);
+    const di = new Array(k);
+    for (let i = 0; i < k; i++) di[i] = yi[i] - theta0;
+
+    // Rank by absolute distance
+    const absOrder = Array.from({ length: k }, (_, i) => i).sort((a, b) => Math.abs(di[a]) - Math.abs(di[b]));
+    const signedRanks = new Array(k).fill(0);
+    for (let rank = 0; rank < k; rank++) {
+      const idx = absOrder[rank];
+      signedRanks[idx] = (rank + 1) * Math.sign(di[idx]);
+    }
+
+    // L0 estimator
+    let S = 0;
+    if (side === 'right') {
+      for (let i = 0; i < k; i++) if (signedRanks[i] > 0) S += signedRanks[i];
+    } else {
+      for (let i = 0; i < k; i++) if (signedRanks[i] < 0) S += Math.abs(signedRanks[i]);
+    }
+    k0 = Math.max(0, Math.round((4 * S - k * (k + 1)) / (2 * k + 1)));
+
+    if (k0 === k0Prev) break;
+    k0Prev = k0;
+    if (k0 === 0) break;
+
+    // Impute reflected studies
+    const order = Array.from({ length: k }, (_, i) => i).sort((a, b) => di[a] - di[b]);
+    let extremeIdx;
+    if (side === 'right') {
+      extremeIdx = order.slice(-k0);
+    } else {
+      extremeIdx = order.slice(0, k0);
+    }
+
+    yiCurr = yi.slice();
+    viCurr = vi.slice();
+    for (const idx of extremeIdx) {
+      yiCurr.push(2 * theta0 - yi[idx]);
+      viCurr.push(vi[idx]);
+    }
+  }
+
+  const { tau2: t2Adj, theta: thetaAdj, se: seAdj } = estDL(yiCurr, viCurr);
+  return { k0, thetaAdj, seAdj, yiAug: yiCurr, viAug: viCurr };
+}
+
+function petPeese(yi, vi) {
+  const k = yi.length;
+  if (k < 3) return { thetaAdj: null, seAdj: null, methodUsed: null };
+
+  const sei = vi.map(v => Math.sqrt(v));
+  const wi = vi.map(v => 1 / v);
+
+  // PET: yi ~ sei
+  const pet = wlsIntercept(yi, sei, wi, k);
+
+  if (pet.p < 0.05) {
+    // PEESE: yi ~ vi
+    const peese = wlsIntercept(yi, vi, wi, k);
+    return { thetaAdj: peese.a, seAdj: peese.seA, methodUsed: 'PEESE' };
+  } else {
+    return { thetaAdj: pet.a, seAdj: pet.seA, methodUsed: 'PET' };
+  }
+}
+
+function selectionModel(yi, vi) {
+  const k = yi.length;
+  if (k < 5) return { thetaAdj: null, seAdj: null, eta: null, lrP: null };
+
+  const sei = vi.map(v => Math.sqrt(v));
+  const etaGrid = [0.01, 0.05, 0.1, 0.2, 0.3, 0.5, 0.7, 1.0];
+
+  const { tau2: tau2Base, theta: thetaBase } = estDL(yi, vi);
+  const llBase = selModelLL(yi, vi, sei, thetaBase, tau2Base, 1.0);
+
+  let bestLL = -Infinity;
+  let bestEta = 1.0;
+  let bestTheta = thetaBase;
+  let bestTau2 = tau2Base;
+
+  for (const eta of etaGrid) {
+    const { theta: thetaTry, tau2: tau2Try } = selModelFit(yi, vi, sei, eta);
+    const ll = selModelLL(yi, vi, sei, thetaTry, tau2Try, eta);
+    if (ll > bestLL) {
+      bestLL = ll;
+      bestEta = eta;
+      bestTheta = thetaTry;
+      bestTau2 = tau2Try;
+    }
+  }
+
+  const lrStat = 2 * (bestLL - llBase);
+  const lrP = chi2SF(Math.max(0, lrStat), 1);
+
+  const { se: seAdj } = poolEstimate(yi, vi, bestTau2);
+
+  return { thetaAdj: bestTheta, seAdj, eta: bestEta, lrP };
+}
+
+function selModelFit(yi, vi, sei, eta) {
+  const k = yi.length;
+  const pValues = yi.map((y, i) => 2 * (1 - normalCDF(Math.abs(y / sei[i]))));
+  const selW = pValues.map(p => p < 0.05 ? 1 : eta);
+
+  let sw = 0, swy = 0;
+  for (let i = 0; i < k; i++) {
+    const w = selW[i] / vi[i];
+    sw += w;
+    swy += w * yi[i];
+  }
+  if (sw <= 0) return { theta: 0, tau2: 0 };
+  const theta = swy / sw;
+
+  let sumW = 0, sumW2 = 0, Q = 0;
+  for (let i = 0; i < k; i++) {
+    const w = selW[i] / vi[i];
+    sumW += w;
+    sumW2 += w * w;
+    Q += w * (yi[i] - theta) ** 2;
+  }
+  const C = sumW - sumW2 / sumW;
+  const tau2 = C > 0 ? Math.max(0, (Q - (k - 1)) / C) : 0;
+  return { theta, tau2 };
+}
+
+function selModelLL(yi, vi, sei, theta, tau2, eta) {
+  let ll = 0;
+  for (let i = 0; i < yi.length; i++) {
+    const totalVar = vi[i] + tau2;
+    ll += -0.5 * (Math.log(totalVar) + (yi[i] - theta) ** 2 / totalVar);
+    const p = 2 * (1 - normalCDF(Math.abs(yi[i] / sei[i])));
+    const sw = p < 0.05 ? 1 : eta;
+    ll += Math.log(Math.max(sw, 1e-30));
+  }
+  return ll;
+}
+
+
+/* =====================================================================
+   BIAS DETECTION (ported from bias_profiler.py)
+   ===================================================================== */
+
+function eggerTest(yi, vi) {
+  const n = yi.length;
+  if (n < 3) return null;
+  const sei = vi.map(v => Math.sqrt(v));
+  const x = sei.map(s => 1 / s);
+  const y = yi.map((e, i) => e / sei[i]);
+
+  let xMean = 0, yMean = 0;
+  for (let i = 0; i < n; i++) { xMean += x[i]; yMean += y[i]; }
+  xMean /= n; yMean /= n;
+
+  let ssXX = 0, ssXY = 0;
+  for (let i = 0; i < n; i++) {
+    ssXX += (x[i] - xMean) ** 2;
+    ssXY += (x[i] - xMean) * (y[i] - yMean);
+  }
+  if (ssXX < 1e-30) return 1;
+  const b = ssXY / ssXX;
+  const a = yMean - b * xMean;
+
+  let mse = 0;
+  for (let i = 0; i < n; i++) {
+    const r = y[i] - (a + b * x[i]);
+    mse += r * r;
+  }
+  mse /= (n - 2);
+
+  const seA = Math.sqrt(mse * (1 / n + xMean * xMean / ssXX));
+  if (seA < 1e-30) return 1;
+  const tStat = a / seA;
+  return 2 * (1 - tCDF(Math.abs(tStat), n - 2));
+}
+
+function beggTest(yi, vi) {
+  const n = yi.length;
+  if (n < 3) return null;
+  let sumW = 0, sumWY = 0;
+  for (let i = 0; i < n; i++) {
+    const w = 1 / vi[i];
+    sumW += w;
+    sumWY += w * yi[i];
+  }
+  const thetaFE = sumWY / sumW;
+  const standardized = yi.map((y, i) => (y - thetaFE) / Math.sqrt(vi[i]));
+  const { p } = kendallTau(standardized, vi);
+  return p;
+}
+
+function excessSignificance(yi, vi) {
+  const n = yi.length;
+  if (n < 3) return 0;
+  const sei = vi.map(v => Math.sqrt(v));
+
+  let sumW = 0, sumWY = 0;
+  for (let i = 0; i < n; i++) {
+    const w = 1 / vi[i];
+    sumW += w;
+    sumWY += w * yi[i];
+  }
+  const thetaFE = sumWY / sumW;
+  const absThetaFE = Math.abs(thetaFE);
+
+  let obsSig = 0;
+  for (let i = 0; i < n; i++) {
+    if (Math.abs(yi[i] / sei[i]) > 1.96) obsSig++;
+  }
+
+  let expSig = 0;
+  for (let i = 0; i < n; i++) {
+    const ncp = absThetaFE / sei[i];
+    const power = 1 - normalCDF(1.96 - ncp) + normalCDF(-1.96 - ncp);
+    expSig += power;
+  }
+  return Math.max(0, obsSig - Math.round(expSig));
+}
+
+function profileBias(yi, vi) {
+  const k = yi.length;
+  return {
+    eggerP: k >= 3 ? eggerTest(yi, vi) : null,
+    beggP: k >= 3 ? beggTest(yi, vi) : null,
+    excessSigCount: k >= 3 ? excessSignificance(yi, vi) : 0,
+    k
+  };
+}
+
+
+/* =====================================================================
+   DESIGN CLASSIFIER (ported from design_classifier.py)
+   ===================================================================== */
+
+const DESIGN_TIERS = {
+  'RCT': 1, 'quasi-experimental': 2, 'MR': 2,
+  'cohort': 3, 'case-control': 3, 'cross-sectional': 3, 'ecological': 3,
+};
+
+const DESIGN_ALIASES = {
+  'rct': 'RCT', 'randomized': 'RCT', 'randomised': 'RCT',
+  'quasi': 'quasi-experimental', 'quasi-experimental': 'quasi-experimental',
+  'mendelian randomization': 'MR', 'mendelian randomisation': 'MR', 'mr': 'MR',
+  'cohort': 'cohort', 'case-control': 'case-control', 'case control': 'case-control',
+  'cross-sectional': 'cross-sectional', 'cross sectional': 'cross-sectional',
+  'ecological': 'ecological',
+};
+
+function classifyDesign(designType) {
+  if (!designType) return { type: 'RCT', tier: 1 };
+  const canonical = DESIGN_ALIASES[designType.trim().toLowerCase()];
+  if (!canonical) return { type: 'RCT', tier: 1 };
+  return { type: canonical, tier: DESIGN_TIERS[canonical] };
+}
+
+
+/* =====================================================================
+   DOSSIER BUILDER (ported from dossier_builder.py)
+   ===================================================================== */
+
+function buildDossiers(studies) {
+  const dossiers = studies.map(s => {
+    const { type, tier } = classifyDesign(s.design_type);
+    return {
+      studyId: s.study_id,
+      yi: s.yi,
+      vi: s.vi,
+      measure: s.measure || 'logOR',
+      designType: type,
+      designTier: tier,
+      rob: s.rob_overall ? { overall: s.rob_overall } : null,
+      year: s.year || null,
+    };
+  });
+  const yi = dossiers.map(d => d.yi);
+  const vi = dossiers.map(d => d.vi);
+  const bias = profileBias(yi, vi);
+  return { dossiers, biasProfile: bias };
+}
+
+
+/* =====================================================================
+   SPEC GENERATOR (ported from spec_generator.py)
+   ===================================================================== */
+
+const DEFAULT_SPEC = {
+  estimators: ['FE', 'DL', 'REML', 'PM', 'SJ', 'ML'],
+  ciMethods: ['Wald', 'HKSJ', 't-dist'],
+  biasCorrections: ['none', 'trim-fill', 'PET-PEESE', 'selection-model'],
+  qualityFilters: ['all', 'exclude-high-rob', 'low-rob-only'],
+  designFilters: ['all', 'rct-quasi', 'rct-only'],
+  sensitivity: ['full', 'loo'],
+  alpha: 0.05,
+  get baseSpecCount() {
+    return this.estimators.length * this.ciMethods.length *
+           this.biasCorrections.length * this.qualityFilters.length *
+           this.designFilters.length;
+  }
+};
+
+function passesQuality(dossier, qf) {
+  if (qf === 'all') return true;
+  if (!dossier.rob) return false;
+  if (qf === 'exclude-high-rob') return dossier.rob.overall !== 'high';
+  if (qf === 'low-rob-only') return dossier.rob.overall === 'low';
+  return true;
+}
+
+function passesDesign(dossier, df) {
+  if (df === 'all') return true;
+  if (df === 'rct-quasi') return dossier.designTier <= 2;
+  if (df === 'rct-only') return dossier.designTier === 1;
+  return true;
+}
+
+function generateSpecs(spec, dossiers, includeLOO, looCap) {
+  looCap = looCap ?? 30;
+  const kTotal = dossiers.length;
+
+  // Pre-compute filter subsets
+  const filterSubsets = {};
+  for (const qf of spec.qualityFilters) {
+    for (const df of spec.designFilters) {
+      const indices = [];
+      for (let i = 0; i < dossiers.length; i++) {
+        if (passesQuality(dossiers[i], qf) && passesDesign(dossiers[i], df)) {
+          indices.push(i);
+        }
+      }
+      if (indices.length >= 2) {
+        filterSubsets[qf + '|' + df] = indices;
+      }
+    }
+  }
+
+  // Build sensitivity levels
+  const sensLevels = ['full'];
+  if (includeLOO) {
+    if (kTotal <= looCap) {
+      for (let i = 0; i < kTotal; i++) {
+        sensLevels.push('loo_' + dossiers[i].studyId);
+      }
+    } else {
+      // Seeded random sample (simple LCG for determinism)
+      const sampleIndices = seededSample(kTotal, Math.min(looCap, kTotal), 42);
+      for (const i of sampleIndices) {
+        sensLevels.push('loo_' + dossiers[i].studyId);
+      }
+    }
+  }
+
+  const specs = [];
+  for (const est of spec.estimators) {
+    for (const ci of spec.ciMethods) {
+      for (const bc of spec.biasCorrections) {
+        for (const qf of spec.qualityFilters) {
+          for (const df of spec.designFilters) {
+            const key = qf + '|' + df;
+            if (!(key in filterSubsets)) continue;
+            const baseIndices = filterSubsets[key];
+
+            for (const sens of sensLevels) {
+              let indices = baseIndices.slice();
+              if (sens.startsWith('loo_')) {
+                const looId = sens.slice(4);
+                indices = indices.filter(i => dossiers[i].studyId !== looId);
+              }
+              const k = indices.length;
+              if (k < 2) continue;
+              if (bc === 'trim-fill' && (k < 5 || est === 'FE')) continue;
+              if (bc === 'selection-model' && k < 10) continue;
+
+              specs.push({
+                specId: est + '_' + ci + '_' + bc + '_' + qf + '_' + df + '_' + sens,
+                estimator: est,
+                ciMethod: ci,
+                biasCorrection: bc,
+                qualityFilter: qf,
+                designFilter: df,
+                sensitivity: sens,
+                studyIndices: indices,
+              });
+            }
+          }
+        }
+      }
+    }
+  }
+  return specs;
+}
+
+/** Seeded random sampling (Fisher-Yates with LCG). */
+function seededSample(n, k, seed) {
+  const arr = Array.from({ length: n }, (_, i) => i);
+  let s = seed;
+  function nextRand() {
+    s = (s * 1664525 + 1013904223) & 0xFFFFFFFF;
+    return (s >>> 0) / 4294967296;
+  }
+  for (let i = n - 1; i > 0; i--) {
+    const j = Math.floor(nextRand() * (i + 1));
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+  }
+  return arr.slice(0, k);
+}
+
+
+/* =====================================================================
+   EXECUTOR (ported from executor.py)
+   ===================================================================== */
+
+function cochranQ(yi, vi) {
+  let sumW = 0, sumWY = 0;
+  for (let i = 0; i < yi.length; i++) {
+    const w = 1 / vi[i];
+    sumW += w;
+    sumWY += w * yi[i];
+  }
+  const theta = sumWY / sumW;
+  let Q = 0;
+  for (let i = 0; i < yi.length; i++) {
+    const w = 1 / vi[i];
+    Q += w * (yi[i] - theta) ** 2;
+  }
+  return Q;
+}
+
+function runSingleSpec(spec, dossiers, alpha) {
+  const indices = spec.studyIndices;
+  let yi = indices.map(i => dossiers[i].yi);
+  let vi = indices.map(i => dossiers[i].vi);
+  let k = yi.length;
+
+  try {
+    const bc = spec.biasCorrection;
+    let bcResult = null;
+
+    // Bias correction (pre-estimation)
+    if (bc === 'trim-fill') {
+      bcResult = trimFill(yi, vi);
+      if (bcResult.thetaAdj === null) return null;
+      yi = bcResult.yiAug;
+      vi = bcResult.viAug;
+      k = yi.length;
+    } else if (bc === 'PET-PEESE') {
+      bcResult = petPeese(yi, vi);
+    } else if (bc === 'selection-model') {
+      bcResult = selectionModel(yi, vi);
+    }
+
+    // Estimate tau2 + theta
+    const estFn = ESTIMATORS[spec.estimator];
+    if (!estFn) return null;
+    let { tau2, theta, se } = estFn(yi, vi);
+
+    // Post-estimation bias adjustment
+    if ((bc === 'PET-PEESE' || bc === 'selection-model') && bcResult && bcResult.thetaAdj !== null) {
+      theta = bcResult.thetaAdj;
+      if (bcResult.seAdj != null) se = bcResult.seAdj;
+    }
+
+    // Confidence interval
+    let ciResult;
+    if (spec.ciMethod === 'Wald') {
+      ciResult = waldCI(theta, se, alpha);
+    } else if (spec.ciMethod === 'HKSJ') {
+      ciResult = hksjCI(theta, se, yi, vi, tau2, k, alpha);
+    } else if (spec.ciMethod === 't-dist') {
+      ciResult = tdistCI(theta, se, k, alpha);
+    } else {
+      return null;
+    }
+
+    // Prediction interval
+    let piLo, piHi;
+    if (k >= 3 && tau2 > 0) {
+      const tCritPI = tQuantile(1 - alpha / 2, k - 2);
+      const piSE = Math.sqrt(tau2 + se * se);
+      piLo = theta - tCritPI * piSE;
+      piHi = theta + tCritPI * piSE;
+    } else {
+      piLo = ciResult.ciLo;
+      piHi = ciResult.ciHi;
+    }
+
+    // I-squared
+    const Q = cochranQ(yi, vi);
+    const I2 = k >= 2 ? Math.max(0, 1 - (k - 1) / Math.max(1e-30, Q)) : 0;
+
+    // Significance + direction
+    const significant = ciResult.pValue < alpha;
+    let direction;
+    if (Math.abs(theta) < 1e-10) direction = 'null';
+    else if (theta > 0) direction = 'positive';
+    else direction = 'negative';
+
+    return {
+      specId: spec.specId,
+      estimator: spec.estimator,
+      ciMethod: spec.ciMethod,
+      biasCorrection: spec.biasCorrection,
+      qualityFilter: spec.qualityFilter,
+      designFilter: spec.designFilter,
+      sensitivity: spec.sensitivity,
+      theta, se,
+      ciLo: ciResult.ciLo,
+      ciHi: ciResult.ciHi,
+      pValue: ciResult.pValue,
+      tau2, I2, k,
+      piLo, piHi,
+      significant, direction,
+      converged: true,
+      error: null,
+    };
+  } catch (e) {
+    return {
+      specId: spec.specId,
+      estimator: spec.estimator,
+      ciMethod: spec.ciMethod,
+      biasCorrection: spec.biasCorrection,
+      qualityFilter: spec.qualityFilter,
+      designFilter: spec.designFilter,
+      sensitivity: spec.sensitivity,
+      theta: 0, se: 0, ciLo: 0, ciHi: 0,
+      pValue: 1, tau2: 0, I2: 0, k: 0,
+      piLo: 0, piHi: 0,
+      significant: false, direction: 'null',
+      converged: false, error: e.message,
+    };
+  }
+}
+
+function executeMultiverse(spec, dossiers, includeLOO) {
+  includeLOO = includeLOO === true;
+  const specs = generateSpecs(spec, dossiers, includeLOO);
+  const results = [];
+  for (const s of specs) {
+    const r = runSingleSpec(s, dossiers, spec.alpha);
+    if (r) results.push(r);
+  }
+  return results;
+}
+
+
+/* =====================================================================
+   MAP: CONCORDANCE (ported from concordance.py)
+   ===================================================================== */
+
+function computeConcordance(results, mcid) {
+  const n = results.length;
+  if (n === 0) return { cDir: 0, cSig: 0, cFull: 0, nSpecs: 0, nFeasible: 0 };
+
+  const feasible = results.filter(r => r.converged);
+  const nF = feasible.length;
+  if (nF === 0) return { cDir: 0, cSig: 0, cFull: 0, nSpecs: n, nFeasible: 0 };
+
+  // Direction concordance
+  const dirCounts = {};
+  for (const r of feasible) dirCounts[r.direction] = (dirCounts[r.direction] || 0) + 1;
+  const majorityDir = Object.entries(dirCounts).sort((a, b) => b[1] - a[1])[0][0];
+  const cDir = feasible.filter(r => r.direction === majorityDir).length / nF;
+
+  // Significance concordance
+  const sigCounts = {};
+  for (const r of feasible) {
+    const key = r.direction + '|' + r.significant;
+    sigCounts[key] = (sigCounts[key] || 0) + 1;
+  }
+  const majorityCombo = Object.entries(sigCounts).sort((a, b) => b[1] - a[1])[0][0];
+  const cSig = feasible.filter(r => (r.direction + '|' + r.significant) === majorityCombo).length / nF;
+
+  // Full concordance
+  let cFull = cSig;
+  if (mcid != null) {
+    const fullCounts = {};
+    for (const r of feasible) {
+      const key = r.direction + '|' + r.significant + '|' + (Math.abs(r.theta) >= mcid);
+      fullCounts[key] = (fullCounts[key] || 0) + 1;
+    }
+    const majorityFull = Object.entries(fullCounts).sort((a, b) => b[1] - a[1])[0][0];
+    cFull = feasible.filter(r => (r.direction + '|' + r.significant + '|' + (Math.abs(r.theta) >= mcid)) === majorityFull).length / nF;
+  }
+
+  return {
+    cDir: Math.round(cDir * 10000) / 10000,
+    cSig: Math.round(cSig * 10000) / 10000,
+    cFull: Math.round(cFull * 10000) / 10000,
+    nSpecs: n,
+    nFeasible: nF,
+  };
+}
+
+
+/* =====================================================================
+   MAP: CLASSIFIER (ported from classifier.py)
+   ===================================================================== */
+
+function classifyRobustness(cSig) {
+  if (cSig >= 0.90) return 'ROBUST';
+  if (cSig >= 0.70) return 'MODERATE';
+  if (cSig >= 0.50) return 'FRAGILE';
+  return 'UNSTABLE';
+}
+
+function conditionalRobustness(results) {
+  const conditions = {};
+
+  for (const qf of ['all', 'exclude-high-rob', 'low-rob-only']) {
+    const subset = results.filter(r => r.qualityFilter === qf);
+    if (subset.length >= 2) {
+      const conc = computeConcordance(subset);
+      conditions[qf] = { cSig: conc.cSig, class: classifyRobustness(conc.cSig), n: subset.length };
+    }
+  }
+
+  for (const df of ['all', 'rct-quasi', 'rct-only']) {
+    const subset = results.filter(r => r.designFilter === df);
+    if (subset.length >= 2) {
+      const conc = computeConcordance(subset);
+      conditions[df] = { cSig: conc.cSig, class: classifyRobustness(conc.cSig), n: subset.length };
+    }
+  }
+
+  const combined = results.filter(r => r.qualityFilter === 'low-rob-only' && r.designFilter === 'rct-only');
+  if (combined.length >= 2) {
+    const conc = computeConcordance(combined);
+    conditions['low-rob_rct-only'] = { cSig: conc.cSig, class: classifyRobustness(conc.cSig), n: combined.length };
+  }
+
+  return conditions;
+}
+
+
+/* =====================================================================
+   MAP: INFLUENCE (ported from influence.py)
+   ===================================================================== */
+
+const INFLUENCE_DIMS = ['estimator', 'ciMethod', 'biasCorrection', 'qualityFilter', 'designFilter'];
+
+function getInfluenceDims(results) {
+  const dims = INFLUENCE_DIMS.slice();
+  if (results.some(r => r.sensitivity !== 'full')) {
+    dims.push('sensitivity');
+  }
+  return dims;
+}
+
+function decomposeInfluence(results, dimensions) {
+  dimensions = dimensions || getInfluenceDims(results);
+  if (!results.length) {
+    const out = {};
+    for (const d of dimensions) out[d] = 0;
+    return out;
+  }
+
+  const thetas = results.map(r => r.theta);
+  let grandMean = 0;
+  for (const t of thetas) grandMean += t;
+  grandMean /= thetas.length;
+
+  let ssTotal = 0;
+  for (const t of thetas) ssTotal += (t - grandMean) ** 2;
+
+  if (ssTotal < 1e-30) {
+    const out = {};
+    for (const d of dimensions) out[d] = 0;
+    return out;
+  }
+
+  const eta2 = {};
+  for (const dim of dimensions) {
+    const groups = {};
+    for (const r of results) {
+      const level = r[dim];
+      if (!groups[level]) groups[level] = [];
+      groups[level].push(r.theta);
+    }
+
+    const levels = Object.keys(groups);
+    if (levels.length < 2) { eta2[dim] = 0; continue; }
+
+    let ssBetween = 0;
+    for (const vals of Object.values(groups)) {
+      let gm = 0;
+      for (const v of vals) gm += v;
+      gm /= vals.length;
+      ssBetween += vals.length * (gm - grandMean) ** 2;
+    }
+    eta2[dim] = Math.round(ssBetween / ssTotal * 10000) / 10000;
+  }
+  return eta2;
+}
+
+
+/* =====================================================================
+   MAP: BOUNDARIES (ported from boundaries.py)
+   ===================================================================== */
+
+function findBoundaries(results, dimensions) {
+  dimensions = dimensions || INFLUENCE_DIMS;
+  if (!results.length) return {};
+
+  const feasible = results.filter(r => r.converged);
+  if (!feasible.length) return {};
+
+  // Majority conclusion
+  let nSigNeg = 0, nSigPos = 0, nNonsig = 0;
+  for (const r of feasible) {
+    if (r.significant && r.direction === 'negative') nSigNeg++;
+    else if (r.significant && r.direction === 'positive') nSigPos++;
+    else if (!r.significant) nNonsig++;
+  }
+  const majoritySig = nSigNeg >= nSigPos && nSigNeg >= nNonsig;
+  const majorityDir = nSigNeg >= nSigPos ? 'negative' : 'positive';
+
+  const boundaries = {};
+  for (const dim of dimensions) {
+    const groups = {};
+    for (const r of feasible) {
+      const level = r[dim];
+      if (!groups[level]) groups[level] = [];
+      groups[level].push(r);
+    }
+
+    if (Object.keys(groups).length < 2) continue;
+
+    const flippers = {};
+    for (const [level, lr] of Object.entries(groups)) {
+      const nAgree = lr.filter(r => r.significant === majoritySig && r.direction === majorityDir).length;
+      const agreeRate = nAgree / lr.length;
+      if (agreeRate < 0.5) {
+        flippers[level] = {
+          agreeRate: Math.round(agreeRate * 1000) / 1000,
+          n: lr.length,
+          flipsSignificance: lr.filter(r => r.significant !== majoritySig).length,
+          flipsDirection: lr.filter(r => r.direction !== majorityDir).length,
+        };
+      }
+    }
+    if (Object.keys(flippers).length > 0) boundaries[dim] = flippers;
+  }
+  return boundaries;
+}
+
+
+/* =====================================================================
+   MAP: LANDSCAPE (synthesize verdict, ported from landscape.py)
+   ===================================================================== */
+
+function synthesizeVerdict(results, mcid) {
+  const conc = computeConcordance(results, mcid);
+  const overallClass = classifyRobustness(conc.cSig);
+  const cond = conditionalRobustness(results);
+  const eta2 = decomposeInfluence(results);
+
+  let dominantDim = 'none';
+  let dominantEta2 = 0;
+  for (const [dim, val] of Object.entries(eta2)) {
+    if (val > dominantEta2) { dominantDim = dim; dominantEta2 = val; }
+  }
+
+  const bounds = findBoundaries(results);
+
+  const feasible = results.filter(r => r.converged);
+  const piNullRate = feasible.length > 0
+    ? feasible.filter(r => r.piLo <= 0 && r.piHi >= 0).length / feasible.length
+    : 0;
+
+  return {
+    overallClass,
+    overallCSig: conc.cSig,
+    concordance: conc,
+    conditional: cond,
+    dominantDimension: dominantDim,
+    dominantEta2,
+    eta2All: eta2,
+    boundaries: bounds,
+    predictionNullRate: Math.round(piNullRate * 10000) / 10000,
+    certification: 'PENDING',
+  };
+}
+
+
+/* =====================================================================
+   CERTIFIER (ported from certifier.py)
+   ===================================================================== */
+
+function certify(nSpecs, nFeasible, nErrors, verdictClass) {
+  const infeasibleRate = 1 - nFeasible / Math.max(1, nSpecs);
+  const errorRate = nErrors / Math.max(1, nFeasible);
+
+  let status, reason;
+  if (errorRate > 0.05) {
+    status = 'REJECT';
+    reason = 'Error rate ' + (errorRate * 100).toFixed(1) + '% exceeds 5% threshold';
+  } else if (infeasibleRate > 0.10) {
+    status = 'WARN';
+    reason = 'Infeasible rate ' + (infeasibleRate * 100).toFixed(1) + '% exceeds 10% (sparse data)';
+  } else {
+    status = 'PASS';
+    reason = 'All checks passed';
+  }
+  return { certification: status, reason };
+}
+
+
+/* =====================================================================
+   UI: TAB SWITCHING
+   ===================================================================== */
+
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(b => {
+    b.classList.remove('active');
+    b.setAttribute('aria-selected', 'false');
+  });
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+
+  const btn = document.querySelector(`.tab-btn[data-tab="${tabId}"]`);
+  if (btn && !btn.disabled) {
+    btn.classList.add('active');
+    btn.setAttribute('aria-selected', 'true');
+    btn.focus();
+  }
+
+  const panelMap = {
+    input: 'inputPanel',
+    assess: 'assessPanel',
+    explore: 'explorePanel',
+    landscape: 'landscapePanel',
+    report: 'reportPanel',
+  };
+  const panel = document.getElementById(panelMap[tabId]);
+  if (panel) panel.classList.add('active');
+}
+
+
+/* =====================================================================
+   UI: THEME
+   ===================================================================== */
+
+function toggleTheme() {
+  document.body.classList.toggle('dark');
+  const isDark = document.body.classList.contains('dark');
+  try { localStorage.setItem('mes_theme', isDark ? 'dark' : 'light'); } catch (e) {}
+}
+
+/* =====================================================================
+   UI: PROGRESS / ERROR
+   ===================================================================== */
+
+function showProgress(msg) {
+  document.getElementById('progressText').textContent = msg || 'Working...';
+  document.getElementById('progressOverlay').classList.add('show');
+}
+
+function hideProgress() {
+  document.getElementById('progressOverlay').classList.remove('show');
+}
+
+function showError(msg) {
+  const toast = document.getElementById('errorToast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 5000);
+}
+
+function showSuccess(msg) {
+  const toast = document.getElementById('successToast');
+  toast.textContent = msg;
+  toast.classList.add('show');
+  setTimeout(() => toast.classList.remove('show'), 5000);
+}
+
+
+/* =====================================================================
+   UI: DATA TABLE
+   ===================================================================== */
+
+let rowCounter = 0;
+
+function addRow(study) {
+  const tbody = document.getElementById('dataBody');
+  rowCounter++;
+  const tr = document.createElement('tr');
+  tr.dataset.row = rowCounter;
+
+  const sid = study ? study.study_id : '';
+  const yiVal = study ? study.yi : '';
+  const viVal = study ? study.vi : '';
+  const design = study ? (study.design_type || 'RCT') : 'RCT';
+  const rob = study ? (study.rob_overall || '') : '';
+
+  tr.innerHTML = `
+    <td class="row-num">${rowCounter}</td>
+    <td><input type="text" class="inp-sid" value="${escapeAttr(sid)}" placeholder="Study ID"></td>
+    <td><input type="number" class="inp-yi" value="${yiVal}" step="any" placeholder="0.00"></td>
+    <td><input type="number" class="inp-vi" value="${viVal}" step="any" placeholder="0.00"></td>
+    <td>
+      <select class="inp-design">
+        <option value="RCT"${design === 'RCT' ? ' selected' : ''}>RCT</option>
+        <option value="quasi-experimental"${design === 'quasi-experimental' ? ' selected' : ''}>Quasi-experimental</option>
+        <option value="MR"${design === 'MR' ? ' selected' : ''}>MR</option>
+        <option value="cohort"${design === 'cohort' ? ' selected' : ''}>Cohort</option>
+        <option value="case-control"${design === 'case-control' ? ' selected' : ''}>Case-control</option>
+        <option value="cross-sectional"${design === 'cross-sectional' ? ' selected' : ''}>Cross-sectional</option>
+      </select>
+    </td>
+    <td>
+      <select class="inp-rob">
+        <option value=""${rob === '' ? ' selected' : ''}>(none)</option>
+        <option value="low"${rob === 'low' ? ' selected' : ''}>Low</option>
+        <option value="some_concerns"${rob === 'some_concerns' ? ' selected' : ''}>Some concerns</option>
+        <option value="high"${rob === 'high' ? ' selected' : ''}>High</option>
+      </select>
+    </td>
+    <td><button class="btn-remove-row" onclick="removeRow(this)" title="Remove row">&#x2715;</button></td>
+  `;
+  tbody.appendChild(tr);
+  updateStudyCount();
+}
+
+function removeRow(btn) {
+  const tr = btn.closest('tr');
+  if (tr) tr.remove();
+  renumberRows();
+  updateStudyCount();
+}
+
+function clearTable() {
+  document.getElementById('dataBody').innerHTML = '';
+  rowCounter = 0;
+  updateStudyCount();
+}
+
+function renumberRows() {
+  const rows = document.querySelectorAll('#dataBody tr');
+  rows.forEach((tr, i) => {
+    tr.querySelector('.row-num').textContent = i + 1;
+  });
+  rowCounter = rows.length;
+}
+
+function updateStudyCount() {
+  const count = document.querySelectorAll('#dataBody tr').length;
+  document.getElementById('studyCount').textContent = count;
+}
+
+function escapeAttr(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+function syncStudiesFromTable() {
+  const rows = document.querySelectorAll('#dataBody tr');
+  const studies = [];
+  for (const tr of rows) {
+    const sid = tr.querySelector('.inp-sid').value.trim();
+    const yi = parseFloat(tr.querySelector('.inp-yi').value);
+    const vi = parseFloat(tr.querySelector('.inp-vi').value);
+    const design = tr.querySelector('.inp-design').value;
+    const rob = tr.querySelector('.inp-rob').value;
+
+    if (!sid || !isFinite(yi) || !isFinite(vi) || vi <= 0) continue;
+
+    const study = { study_id: sid, yi, vi, design_type: design, measure: 'logOR' };
+    if (rob) study.rob_overall = rob;
+    studies.push(study);
+  }
+  return studies;
+}
+
+
+/* =====================================================================
+   UI: LOAD BUILT-IN DATASET
+   ===================================================================== */
+
+function loadBuiltIn() {
+  const sel = document.getElementById('datasetSelect').value;
+  if (!sel || !BUILT_IN[sel]) { showError('Select a dataset first.'); return; }
+
+  clearTable();
+  for (const s of BUILT_IN[sel]) {
+    addRow(s);
+  }
+}
+
+
+/* =====================================================================
+   UI: CSV IMPORT (fuzzy header matching)
+   ===================================================================== */
+
+function importCSV() {
+  const fileInput = document.getElementById('csvFile');
+  if (!fileInput.files || !fileInput.files[0]) { showError('Select a CSV file first.'); return; }
+
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const text = e.target.result;
+      const lines = text.split(/\r?\n/).filter(l => l.trim());
+      if (lines.length < 2) { showError('CSV must have a header + at least one data row.'); return; }
+
+      const sep = lines[0].includes('\t') ? '\t' : ',';
+      const headers = lines[0].split(sep).map(h => h.trim().toLowerCase().replace(/["\s]/g, ''));
+
+      // Fuzzy matching — expanded aliases
+      const colMap = {};
+      const patterns = {
+        study_id: ['study_id', 'studyid', 'study', 'author', 'name', 'id', 'source'],
+        yi: ['yi', 'effect', 'effectsize', 'es', 'logror', 'logor', 'logrr', 'lnor', 'lnrr', 'lnhr', 'smd', 'theta', 'estimate'],
+        vi: ['vi', 'variance', 'var', 'samplingvariance', 'v'],
+        se: ['se', 'sei', 'stderr', 'standard_error', 'standarderror'],
+        design_type: ['design_type', 'designtype', 'design', 'type', 'studydesign', 'study_design'],
+        rob_overall: ['rob_overall', 'roboverall', 'rob', 'riskofbias', 'risk', 'quality'],
+      };
+
+      for (const [field, aliases] of Object.entries(patterns)) {
+        for (const alias of aliases) {
+          const idx = headers.indexOf(alias);
+          if (idx >= 0 && !(field in colMap)) {
+            colMap[field] = idx;
+            break;
+          }
+        }
+      }
+
+      // SE-to-VI: if vi column missing but se column found, flag for conversion
+      const useSEasVI = !('vi' in colMap) && ('se' in colMap);
+      if (useSEasVI) colMap.vi = colMap.se; // will convert se -> vi below
+
+      if (!('yi' in colMap) || !('vi' in colMap)) {
+        showError('CSV must have columns for effect size (yi) and variance (vi) or standard error (se).');
+        return;
+      }
+
+      clearTable();
+      let imported = 0;
+      let seConverted = 0;
+      for (let i = 1; i < lines.length; i++) {
+        const cols = lines[i].split(sep).map(c => c.trim().replace(/^"|"$/g, ''));
+        const rawYi = parseFloat(cols[colMap.yi]);
+        let rawVi = parseFloat(cols[colMap.vi]);
+
+        // Convert SE to variance if needed
+        if (useSEasVI && isFinite(rawVi)) {
+          rawVi = rawVi * rawVi; // vi = se^2
+          seConverted++;
+        }
+
+        const study = {
+          study_id: ('study_id' in colMap) ? cols[colMap.study_id] : ('Study_' + i),
+          yi: rawYi,
+          vi: rawVi,
+          design_type: ('design_type' in colMap) ? cols[colMap.design_type] : 'RCT',
+        };
+        if ('rob_overall' in colMap) study.rob_overall = cols[colMap.rob_overall];
+        if (isFinite(study.yi) && isFinite(study.vi) && study.vi > 0) {
+          addRow(study);
+          imported++;
+        }
+      }
+      if (imported === 0) {
+        showError('No valid rows found in CSV.');
+      } else {
+        const seNote = seConverted > 0 ? ` (${seConverted} had SE converted to variance)` : '';
+        showSuccess(`Imported ${imported} studies from CSV${seNote}.`);
+      }
+    } catch (err) {
+      showError('CSV parsing error: ' + err.message);
+    }
+  };
+  reader.readAsText(fileInput.files[0]);
+}
+
+
+/* =====================================================================
+   MAIN: runAnalysis()
+   ===================================================================== */
+
+function runAnalysis() {
+  const studies = syncStudiesFromTable();
+  if (studies.length < 2) { showError('Need at least 2 studies with valid yi and vi > 0.'); return; }
+  const includeLOO = document.getElementById('looCheckbox').checked;
+
+  showProgress('Building evidence dossiers...');
+
+  setTimeout(() => {
+    try {
+      // ASSESS
+      const { dossiers, biasProfile } = buildDossiers(studies);
+
+      showProgress('Running multiverse...');
+      setTimeout(() => {
+        try {
+          // EXPLORE
+          const results = executeMultiverse(DEFAULT_SPEC, dossiers, includeLOO);
+
+          showProgress('Mapping evidence landscape (' + results.length + ' specifications)...');
+          setTimeout(() => {
+            try {
+              // MAP
+              const verdict = synthesizeVerdict(results);
+
+              // CERTIFY
+              const nErrors = results.filter(r => !r.converged).length;
+              const looMult = includeLOO ? (dossiers.length + 1) : 1;
+              const cert = certify(
+                DEFAULT_SPEC.baseSpecCount * looMult,
+                results.length,
+                nErrors,
+                verdict.overallClass
+              );
+              verdict.certification = cert.certification;
+              verdict.certReason = cert.reason;
+
+              // Store
+              appState.dossiers = dossiers;
+              appState.biasProfile = biasProfile;
+              appState.results = results;
+              appState.verdict = verdict;
+
+              // Enable tabs
+              document.getElementById('tabAssess').disabled = false;
+              document.getElementById('tabExplore').disabled = false;
+              document.getElementById('tabLandscape').disabled = false;
+              document.getElementById('tabReport').disabled = false;
+
+              // Render all tabs
+              renderTab2(dossiers, biasProfile);
+              renderTab3(results, verdict);
+              renderTab4(verdict, results);
+              renderTab5(verdict, studies, results, dossiers);
+
+              switchTab('assess');
+              hideProgress();
+            } catch (e) {
+              hideProgress();
+              showError('Analysis failed: ' + e.message);
+              console.error(e);
+            }
+          }, 20);
+        } catch (e) {
+          hideProgress();
+          showError('Analysis failed: ' + e.message);
+          console.error(e);
+        }
+      }, 20);
+    } catch (e) {
+      hideProgress();
+      showError('Analysis failed: ' + e.message);
+      console.error(e);
+    }
+  }, 20);
+}
+
+
+/* =====================================================================
+   RENDER: Tab 2 — Evidence Assessment
+   ===================================================================== */
+
+function renderTab2(dossiers, biasProfile) {
+  const el = document.getElementById('assessContent');
+
+  // Design distribution
+  const designCounts = {};
+  for (const d of dossiers) {
+    designCounts[d.designType] = (designCounts[d.designType] || 0) + 1;
+  }
+  const tierBadgeHTML = (tier) => {
+    const cls = tier === 1 ? 'badge-success' : tier === 2 ? 'badge-info' : 'badge-warning';
+    return `<span class="badge ${cls}">Tier ${tier}</span>`;
+  };
+  const designRows = Object.entries(designCounts)
+    .map(([t, n]) => `<tr><td>${esc(t)}</td><td><strong>${n}</strong></td><td>${tierBadgeHTML(DESIGN_TIERS[t] || 1)}</td></tr>`)
+    .join('');
+
+  // RoB distribution
+  const robCounts = { low: 0, some_concerns: 0, high: 0, unassessed: 0 };
+  for (const d of dossiers) {
+    if (d.rob) robCounts[d.rob.overall] = (robCounts[d.rob.overall] || 0) + 1;
+    else robCounts.unassessed++;
+  }
+
+  // RoB Traffic Light Table
+  const robColorMap = { low: '#22c55e', some_concerns: '#fbbf24', high: '#ef4444' };
+  const robLabelMap = { low: 'Low', some_concerns: 'Some Concerns', high: 'High' };
+  const hasRoB = robCounts.unassessed < dossiers.length;
+  let robTrafficHTML = '';
+  if (hasRoB) {
+    const robTableRows = dossiers.map(d => {
+      const robLevel = d.rob ? d.rob.overall : null;
+      const bgColor = robLevel ? (robColorMap[robLevel] || '#666') : '#666';
+      const label = robLevel ? (robLabelMap[robLevel] || robLevel) : 'Unassessed';
+      return `<tr>
+        <td>${esc(d.studyId)}</td>
+        <td style="text-align:center;">
+          <span style="display:inline-block;width:22px;height:22px;border-radius:50%;background:${bgColor};vertical-align:middle;" title="${esc(label)}"></span>
+        </td>
+        <td style="color:${bgColor};font-weight:600;">${esc(label)}</td>
+      </tr>`;
+    }).join('');
+    robTrafficHTML = `
+    <div class="card">
+      <div class="card-title">Risk of Bias Traffic Light</div>
+      <div class="table-wrapper" style="max-height:400px;overflow-y:auto;">
+        <table class="data-table">
+          <thead><tr><th>Study</th><th>RoB</th><th>Level</th></tr></thead>
+          <tbody>${robTableRows}</tbody>
+        </table>
+      </div>
+    </div>`;
+  } else {
+    robTrafficHTML = `
+    <div class="card">
+      <div class="card-title">Risk of Bias Traffic Light</div>
+      <p style="color:var(--text-muted);">No risk of bias data provided. Assign RoB levels in the data table to enable this view.</p>
+    </div>`;
+  }
+
+  // Bias Profile Traffic Light Card
+  const eggerSig = biasProfile.eggerP !== null && biasProfile.eggerP < 0.10;
+  const beggSig = biasProfile.beggP !== null && biasProfile.beggP < 0.10;
+  const nBiasSig = (eggerSig ? 1 : 0) + (beggSig ? 1 : 0);
+  const biasLightColor = nBiasSig === 0 ? '#22c55e' : nBiasSig === 1 ? '#fbbf24' : '#ef4444';
+  const biasLightLabel = nBiasSig === 0 ? 'No concerns' : nBiasSig === 1 ? 'Some concern' : 'Significant bias risk';
+
+  const eggerBadge = biasProfile.eggerP !== null
+    ? (biasProfile.eggerP < 0.05
+        ? `<span class="badge badge-danger">p = ${biasProfile.eggerP.toFixed(4)}</span>`
+        : `<span class="badge badge-success">p = ${biasProfile.eggerP.toFixed(4)}</span>`)
+    : '<span class="badge badge-info">N/A (k &lt; 3)</span>';
+
+  const beggBadge = biasProfile.beggP !== null
+    ? (biasProfile.beggP < 0.05
+        ? `<span class="badge badge-danger">p = ${biasProfile.beggP.toFixed(4)}</span>`
+        : `<span class="badge badge-success">p = ${biasProfile.beggP.toFixed(4)}</span>`)
+    : '<span class="badge badge-info">N/A (k &lt; 3)</span>';
+
+  // Study Summary Card
+  const yiVals = dossiers.map(d => d.yi);
+  const viVals = dossiers.map(d => d.vi);
+  const years = dossiers.map(d => d.year).filter(y => y !== null && y !== undefined);
+  const yiMin = Math.min(...yiVals);
+  const yiMax = Math.max(...yiVals);
+  const viMin = Math.min(...viVals);
+  const viMax = Math.max(...viVals);
+  const medianYear = years.length > 0 ? sortedMedian(years) : null;
+
+  el.innerHTML = `
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-value">${dossiers.length}</div>
+        <div class="metric-label">Total Studies (k)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">${yiMin.toFixed(3)} to ${yiMax.toFixed(3)}</div>
+        <div class="metric-label">Effect Range (yi)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">${viMin.toFixed(4)} to ${viMax.toFixed(4)}</div>
+        <div class="metric-label">Variance Range (vi)</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">${medianYear !== null ? Math.round(medianYear) : '--'}</div>
+        <div class="metric-label">Median Year</div>
+      </div>
+    </div>
+
+    ${robTrafficHTML}
+
+    <div class="card">
+      <div class="card-title">Design Classification Summary</div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead><tr><th>Design</th><th>Count</th><th>Tier</th></tr></thead>
+          <tbody>${designRows}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Publication Bias Profile</div>
+      <div style="display:flex;align-items:center;gap:16px;margin-bottom:16px;">
+        <span style="display:inline-block;width:40px;height:40px;border-radius:50%;background:${biasLightColor};flex-shrink:0;" title="${esc(biasLightLabel)}"></span>
+        <span style="font-weight:600;color:${biasLightColor};">${esc(biasLightLabel)}</span>
+      </div>
+      <table class="data-table">
+        <thead><tr><th>Test</th><th>Result</th><th>Interpretation</th></tr></thead>
+        <tbody>
+          <tr>
+            <td>Egger's regression</td>
+            <td>${eggerBadge}</td>
+            <td>${biasProfile.eggerP !== null && biasProfile.eggerP < 0.05 ? 'Significant asymmetry detected' : 'No evidence of asymmetry'}</td>
+          </tr>
+          <tr>
+            <td>Begg's rank correlation</td>
+            <td>${beggBadge}</td>
+            <td>${biasProfile.beggP !== null && biasProfile.beggP < 0.05 ? 'Significant rank correlation' : 'No evidence of publication bias'}</td>
+          </tr>
+          <tr>
+            <td>Excess significance</td>
+            <td><span class="badge ${biasProfile.excessSigCount > 0 ? 'badge-warning' : 'badge-success'}">${biasProfile.excessSigCount} excess</span></td>
+            <td>${biasProfile.excessSigCount > 0 ? 'More significant studies than expected' : 'No excess significance'}</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  `;
+}
+
+
+/* =====================================================================
+   RENDER: Tab 3 — Multiverse Explorer (stub)
+   ===================================================================== */
+
+function renderTab3(results, verdict) {
+  const el = document.getElementById('exploreContent');
+  const feasible = results.filter(r => r.converged);
+  const errored = results.filter(r => !r.converged);
+
+  // Count per dimension
+  const dimCounts = {};
+  for (const dim of INFLUENCE_DIMS) {
+    const levels = new Set(results.map(r => r[dim]));
+    dimCounts[dim] = levels.size;
+  }
+
+  // Summary stats of thetas
+  const thetas = feasible.map(r => r.theta);
+  const thetaMin = thetas.length ? Math.min(...thetas) : 0;
+  const thetaMax = thetas.length ? Math.max(...thetas) : 0;
+  const thetaMedian = thetas.length ? sortedMedian(thetas) : 0;
+
+  const fullSpecs = feasible.filter(r => r.sensitivity === 'full');
+  const looSpecs = feasible.filter(r => r.sensitivity.startsWith('loo_'));
+
+  // Concordance
+  const conc = verdict.concordance;
+  const nSigAgreed = Math.round(conc.cSig * conc.nFeasible);
+
+  el.innerHTML = `
+    <div class="metrics-grid">
+      <div class="metric-card">
+        <div class="metric-value">${results.length}</div>
+        <div class="metric-label">Specifications Executed</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">${feasible.length}</div>
+        <div class="metric-label">Feasible / Converged</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">${errored.length}</div>
+        <div class="metric-label">Errors</div>
+      </div>
+      <div class="metric-card">
+        <div class="metric-value">${fullSpecs.length} + ${looSpecs.length}</div>
+        <div class="metric-label">Full + LOO specs</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Concordance Summary</div>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value" style="color:var(--success);">${(conc.cDir * 100).toFixed(1)}%</div>
+          <div class="metric-label">C<sub>dir</sub> (Direction)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" style="color:var(--accent);">${(conc.cSig * 100).toFixed(1)}%</div>
+          <div class="metric-label">C<sub>sig</sub> (Significance)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value" style="color:var(--warning);">${(conc.cFull * 100).toFixed(1)}%</div>
+          <div class="metric-label">C<sub>full</sub> (Full)</div>
+        </div>
+      </div>
+      <p style="color:var(--text-muted);font-size:0.85rem;text-align:center;margin-top:4px;">
+        ${nSigAgreed} of ${conc.nFeasible} feasible specifications agree on the majority conclusion
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Multiverse Dimensions</div>
+      <table class="data-table">
+        <thead><tr><th>Dimension</th><th>Levels</th><th>Levels Used</th></tr></thead>
+        <tbody>
+          <tr><td>Estimator</td><td>${dimCounts.estimator || 0}</td><td>${[...new Set(results.map(r => r.estimator))].join(', ')}</td></tr>
+          <tr><td>CI Method</td><td>${dimCounts.ciMethod || 0}</td><td>${[...new Set(results.map(r => r.ciMethod))].join(', ')}</td></tr>
+          <tr><td>Bias Correction</td><td>${dimCounts.biasCorrection || 0}</td><td>${[...new Set(results.map(r => r.biasCorrection))].join(', ')}</td></tr>
+          <tr><td>Quality Filter</td><td>${dimCounts.qualityFilter || 0}</td><td>${[...new Set(results.map(r => r.qualityFilter))].join(', ')}</td></tr>
+          <tr><td>Design Filter</td><td>${dimCounts.designFilter || 0}</td><td>${[...new Set(results.map(r => r.designFilter))].join(', ')}</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Specification Curve</div>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value">${thetaMin.toFixed(4)}</div>
+          <div class="metric-label">Min theta</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">${thetaMedian.toFixed(4)}</div>
+          <div class="metric-label">Median theta</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">${thetaMax.toFixed(4)}</div>
+          <div class="metric-label">Max theta</div>
+        </div>
+      </div>
+      <div id="specCurvePlot" style="width:100%;height:350px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Janus Plot (Volcano)</div>
+      <div class="card-subtitle">Each point is one specification. Horizontal: effect size. Vertical: -log10(p). Points above the dashed red line are significant at alpha = 0.05.</div>
+      <div id="janusPlot" style="width:100%;height:400px;"></div>
+    </div>
+  `;
+
+  const plotFont = { family: getCSSVar('--font') || 'Segoe UI, system-ui, sans-serif', color: getCSSVar('--text') || '#1a1a2e' };
+  const plotBg = 'rgba(0,0,0,0)';
+
+  // Specification Curve Plot
+  if (feasible.length > 0 && typeof Plotly !== 'undefined') {
+    const sorted = [...feasible].sort((a, b) => a.theta - b.theta);
+    const xArr = sorted.map((_, i) => i + 1);
+    const yArr = sorted.map(r => r.theta);
+    const colors = sorted.map(r => r.significant ? '#3b82f6' : '#94a3b8');
+    const hoverTexts = sorted.map((r, i) => `Spec ${i + 1}<br>theta = ${r.theta.toFixed(4)}<br>${r.estimator} / ${r.ciMethod}<br>p = ${r.pValue.toFixed(4)}`);
+
+    Plotly.newPlot('specCurvePlot', [{
+      x: xArr,
+      y: yArr,
+      type: 'scatter',
+      mode: 'markers',
+      marker: { color: colors, size: 3 },
+      text: hoverTexts,
+      hoverinfo: 'text',
+    }], {
+      xaxis: { title: 'Specification (sorted by effect)', showgrid: false },
+      yaxis: { title: 'Pooled Effect (theta)', zeroline: true },
+      shapes: [{ type: 'line', y0: 0, y1: 0, x0: 0, x1: sorted.length + 1, line: { dash: 'dash', color: '#888', width: 1 } }],
+      margin: { l: 60, r: 20, t: 10, b: 50 },
+      paper_bgcolor: plotBg, plot_bgcolor: plotBg,
+      font: plotFont,
+    }, { responsive: true, displayModeBar: false });
+
+    _plotEls.add(document.getElementById('specCurvePlot'));
+  }
+
+  // Janus Plot
+  if (feasible.length > 0 && typeof Plotly !== 'undefined') {
+    const xJanus = feasible.map(r => r.theta);
+    const yJanus = feasible.map(r => -Math.log10(Math.max(r.pValue, 1e-300)));
+    const colorsJanus = feasible.map(r => r.significant ? '#3b82f6' : '#94a3b8');
+    const hoverJanus = feasible.map(r => `theta = ${r.theta.toFixed(4)}<br>p = ${r.pValue.toFixed(4)}<br>${r.estimator} / ${r.ciMethod} / ${r.biasCorrection}`);
+    const maxY = Math.max(5, ...yJanus) * 1.1;
+    const xRange = Math.max(Math.abs(Math.min(...xJanus)), Math.abs(Math.max(...xJanus))) * 1.2;
+    const minTheta = -xRange;
+    const maxTheta = xRange;
+    const sigLine = -Math.log10(0.05);
+
+    // Quadrant counts
+    const qTopLeft = feasible.filter(r => r.theta < 0 && r.significant).length;
+    const qTopRight = feasible.filter(r => r.theta > 0 && r.significant).length;
+    const qBotLeft = feasible.filter(r => r.theta < 0 && !r.significant).length;
+    const qBotRight = feasible.filter(r => r.theta > 0 && !r.significant).length;
+
+    Plotly.newPlot('janusPlot', [{
+      x: xJanus,
+      y: yJanus,
+      type: 'scatter',
+      mode: 'markers',
+      marker: { color: colorsJanus, size: 4 },
+      text: hoverJanus,
+      hoverinfo: 'text',
+    }], {
+      xaxis: { title: 'Effect (theta)', zeroline: true, range: [minTheta, maxTheta] },
+      yaxis: { title: '-log10(p)', range: [0, maxY] },
+      shapes: [
+        // Quadrant background zones (drawn below data via layer:'below')
+        { type: 'rect', x0: minTheta, x1: 0, y0: sigLine, y1: maxY, fillcolor: 'rgba(191,219,254,0.25)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', x0: 0, x1: maxTheta, y0: sigLine, y1: maxY, fillcolor: 'rgba(254,202,202,0.25)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', x0: minTheta, x1: 0, y0: 0, y1: sigLine, fillcolor: 'rgba(229,231,235,0.2)', line: { width: 0 }, layer: 'below' },
+        { type: 'rect', x0: 0, x1: maxTheta, y0: 0, y1: sigLine, fillcolor: 'rgba(229,231,235,0.2)', line: { width: 0 }, layer: 'below' },
+        // Reference lines
+        { type: 'line', y0: sigLine, y1: sigLine, x0: minTheta, x1: maxTheta, line: { dash: 'dot', color: '#ef4444', width: 1.5 } },
+        { type: 'line', x0: 0, x1: 0, y0: 0, y1: maxY, line: { dash: 'dash', color: '#888', width: 1 } },
+      ],
+      annotations: [
+        { x: minTheta * 0.5, y: maxY * 0.8, text: `Sig. Negative (${qTopLeft})`, showarrow: false, font: { size: 11, color: '#666' } },
+        { x: maxTheta * 0.5, y: maxY * 0.8, text: `Sig. Positive (${qTopRight})`, showarrow: false, font: { size: 11, color: '#666' } },
+        { x: minTheta * 0.5, y: sigLine * 0.4, text: `Non-sig. (${qBotLeft})`, showarrow: false, font: { size: 10, color: '#999' } },
+        { x: maxTheta * 0.5, y: sigLine * 0.4, text: `Non-sig. (${qBotRight})`, showarrow: false, font: { size: 10, color: '#999' } },
+      ],
+      margin: { l: 60, r: 20, t: 10, b: 50 },
+      paper_bgcolor: plotBg, plot_bgcolor: plotBg,
+      font: plotFont,
+    }, { responsive: true, displayModeBar: false });
+
+    _plotEls.add(document.getElementById('janusPlot'));
+  }
+}
+
+function getCSSVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+function sortedMedian(arr) {
+  const s = arr.slice().sort((a, b) => a - b);
+  const mid = Math.floor(s.length / 2);
+  return s.length % 2 ? s[mid] : (s[mid - 1] + s[mid]) / 2;
+}
+
+
+/* =====================================================================
+   RENDER: Tab 4 — Evidence Landscape
+   ===================================================================== */
+
+function renderTab4(verdict, results) {
+  const el = document.getElementById('landscapeContent');
+  const cls = verdict.overallClass.toLowerCase();
+  const robColors = { robust: '#22c55e', moderate: '#fbbf24', fragile: '#f97316', unstable: '#ef4444' };
+  const feasible = results.filter(r => r.converged);
+
+  // Conditional robustness cards
+  const condEntries = Object.entries(verdict.conditional);
+  const condCardsHTML = condEntries.length > 0 ? condEntries.map(([k, v]) => {
+    const cCls = v.class.toLowerCase();
+    const cColor = robColors[cCls] || '#888';
+    return `<div class="metric-card" style="border-left:4px solid ${cColor};">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">
+        <span style="display:inline-block;width:16px;height:16px;border-radius:50%;background:${cColor};flex-shrink:0;"></span>
+        <span style="font-weight:600;font-size:0.85rem;">${esc(k)}</span>
+      </div>
+      <div class="metric-value" style="font-size:1.3rem;color:${cColor};">${(v.cSig * 100).toFixed(1)}%</div>
+      <div class="metric-label"><span class="badge badge-${robBadgeClass(v.class)}">${v.class}</span> (${v.n} specs)</div>
+    </div>`;
+  }).join('') : '<p style="color:var(--text-muted);">No conditional subsets available.</p>';
+
+  // Eta2 rows
+  const eta2Entries = Object.entries(verdict.eta2All).sort((a, b) => b[1] - a[1]);
+  const eta2Rows = eta2Entries
+    .map(([dim, val]) => `<tr><td>${esc(dim)}</td><td>${(val * 100).toFixed(1)}%</td><td><div style="background:var(--accent);height:12px;width:${Math.min(val * 100 * 3, 100)}%;border-radius:4px;"></div></td></tr>`)
+    .join('');
+
+  // Boundary rows
+  let boundaryHTML = '<p style="color:var(--text-muted);">No fragility boundaries detected -- the conclusion is stable across all dimension levels.</p>';
+  if (Object.keys(verdict.boundaries).length > 0) {
+    const bRows = [];
+    for (const [dim, flippers] of Object.entries(verdict.boundaries)) {
+      for (const [level, info] of Object.entries(flippers)) {
+        bRows.push(`<tr>
+          <td><strong>${esc(dim)}</strong></td>
+          <td>${esc(level)}</td>
+          <td style="color:${info.agreeRate < 0.3 ? '#ef4444' : '#f97316'};font-weight:600;">${(info.agreeRate * 100).toFixed(1)}%</td>
+          <td>${info.n}</td>
+          <td>${info.flipsSignificance} sig / ${info.flipsDirection} dir</td>
+        </tr>`);
+      }
+    }
+    boundaryHTML = `
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead><tr><th>Dimension</th><th>Level</th><th>Agreement</th><th>n specs</th><th>Flips</th></tr></thead>
+          <tbody>${bRows.join('')}</tbody>
+        </table>
+      </div>
+    `;
+  }
+
+  // Prediction interval summary
+  const piNullCount = feasible.filter(r => r.piLo <= 0 && r.piHi >= 0).length;
+  const piNullPct = feasible.length > 0 ? (piNullCount / feasible.length * 100) : 0;
+  const piBarColor = piNullPct > 50 ? '#ef4444' : piNullPct > 25 ? '#fbbf24' : '#22c55e';
+
+  // Decision stability heatmap data
+  const heatmapDims = INFLUENCE_DIMS;
+  const heatmapMetrics = ['Median theta', '% Significant', 'Median I2'];
+  const heatmapLevelLabels = [];
+  const heatmapZ = [];
+  for (const dim of heatmapDims) {
+    const levels = [...new Set(feasible.map(r => r[dim]))].sort();
+    for (const level of levels) {
+      const subset = feasible.filter(r => r[dim] === level);
+      if (subset.length === 0) continue;
+      heatmapLevelLabels.push(dim + ': ' + level);
+      const medTheta = sortedMedian(subset.map(r => r.theta));
+      const pctSig = subset.filter(r => r.significant).length / subset.length;
+      const medI2 = sortedMedian(subset.map(r => r.I2));
+      heatmapZ.push([medTheta, pctSig, medI2]);
+    }
+  }
+
+  el.innerHTML = `
+    <div class="card" style="text-align:center;">
+      <div class="traffic-light">
+        <div class="traffic-circle ${cls}">${(verdict.overallCSig * 100).toFixed(0)}%</div>
+        <div class="traffic-label ${cls}">${verdict.overallClass}</div>
+        <div style="color:var(--text-muted);font-size:0.9rem;">
+          C<sub>sig</sub> = ${verdict.overallCSig.toFixed(4)} | ${verdict.concordance.nFeasible} feasible specifications
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Concordance Metrics</div>
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-value">${verdict.concordance.cDir.toFixed(4)}</div>
+          <div class="metric-label">C<sub>dir</sub> (direction)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">${verdict.concordance.cSig.toFixed(4)}</div>
+          <div class="metric-label">C<sub>sig</sub> (significance)</div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-value">${verdict.concordance.cFull.toFixed(4)}</div>
+          <div class="metric-label">C<sub>full</sub> (full)</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Conditional Robustness</div>
+      <div class="metrics-grid">${condCardsHTML}</div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Influence Decomposition (eta-squared)</div>
+      <div style="display:flex;gap:24px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:300px;">
+          <div class="table-wrapper">
+            <table class="data-table">
+              <thead><tr><th>Dimension</th><th>eta-sq</th><th></th></tr></thead>
+              <tbody>${eta2Rows}</tbody>
+            </table>
+          </div>
+          <p style="color:var(--text-muted);font-size:0.85rem;margin-top:8px;">
+            Dominant: <strong>${esc(verdict.dominantDimension)}</strong> (${(verdict.dominantEta2 * 100).toFixed(1)}%)
+          </p>
+        </div>
+        <div style="flex:1;min-width:300px;">
+          <div id="influencePlot" style="width:100%;height:350px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Decision Stability Heatmap</div>
+      <div class="card-subtitle">Median theta, % significant, and median I-squared across each dimension level.</div>
+      <div id="stabilityHeatmap" style="width:100%;height:${Math.max(300, heatmapLevelLabels.length * 22 + 80)}px;"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Fragility Boundaries</div>
+      ${boundaryHTML}
+    </div>
+
+    <div class="card">
+      <div class="card-title">Prediction Interval Summary</div>
+      <p style="margin-bottom:8px;">${piNullCount} of ${feasible.length} specifications (${piNullPct.toFixed(1)}%) have prediction intervals crossing the null.</p>
+      <div style="background:var(--border);border-radius:6px;height:24px;overflow:hidden;">
+        <div style="background:${piBarColor};height:100%;width:${piNullPct.toFixed(1)}%;border-radius:6px;transition:width 0.3s;"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.75rem;color:var(--text-muted);margin-top:4px;">
+        <span>0%</span>
+        <span>PI crossing null</span>
+        <span>100%</span>
+      </div>
+    </div>
+  `;
+
+  const plotFont = { family: getCSSVar('--font') || 'Segoe UI, system-ui, sans-serif', color: getCSSVar('--text') || '#1a1a2e' };
+  const plotBg = 'rgba(0,0,0,0)';
+
+  // Influence Sunburst — nested: inner ring = dimensions, outer ring = levels
+  if (typeof Plotly !== 'undefined' && eta2Entries.length > 0) {
+    const dimColors = {
+      'estimator': '#4ecdc4',
+      'ciMethod': '#ff6b6b',
+      'biasCorrection': '#ffd93d',
+      'qualityFilter': '#c084fc',
+      'designFilter': '#22c55e',
+      'sensitivity': '#f97316'
+    };
+
+    const sunLabels = ['Influence'];
+    const sunParents = [''];
+    const sunValues = [0];
+    const sunColors = ['#1a1a2e'];
+
+    for (const [dim, eta] of eta2Entries) {
+      const niceName = dim.replace(/([A-Z])/g, ' $1').trim();
+      sunLabels.push(niceName);
+      sunParents.push('Influence');
+      sunValues.push(Math.max(eta, 0.001));
+      sunColors.push(dimColors[dim] || '#888');
+
+      // Outer ring: levels within this dimension
+      const levelCounts = {};
+      for (const r of results) {
+        const lev = r[dim];
+        if (lev !== undefined) levelCounts[lev] = (levelCounts[lev] || 0) + 1;
+      }
+      for (const [lev, count] of Object.entries(levelCounts)) {
+        sunLabels.push(lev);
+        sunParents.push(niceName);
+        sunValues.push(Math.max(eta, 0.001) * count / results.length);
+        sunColors.push(dimColors[dim] || '#888');
+      }
+    }
+
+    Plotly.newPlot('influencePlot', [{
+      type: 'sunburst',
+      labels: sunLabels,
+      parents: sunParents,
+      values: sunValues,
+      marker: { colors: sunColors },
+      textinfo: 'label+percent parent',
+      branchvalues: 'total',
+      insidetextorientation: 'radial',
+    }], {
+      title: { text: 'Influence Decomposition (\u03B7\u00B2)', font: { size: 14, color: plotFont.color } },
+      margin: { l: 10, r: 10, t: 40, b: 10 },
+      paper_bgcolor: plotBg,
+      font: plotFont,
+    }, { responsive: true, displayModeBar: false });
+
+    _plotEls.add(document.getElementById('influencePlot'));
+  }
+
+  // Decision Stability Heatmap
+  if (typeof Plotly !== 'undefined' && heatmapZ.length > 0) {
+    // Transpose for Plotly (z[metric][level])
+    const zT = heatmapMetrics.map((_, mi) => heatmapZ.map(row => row[mi]));
+
+    Plotly.newPlot('stabilityHeatmap', [{
+      type: 'heatmap',
+      z: zT,
+      x: heatmapLevelLabels,
+      y: heatmapMetrics,
+      colorscale: 'RdYlGn',
+      reversescale: false,
+      hovertemplate: '%{y}<br>%{x}<br>Value: %{z:.4f}<extra></extra>',
+    }], {
+      margin: { l: 120, r: 20, t: 10, b: 80 },
+      xaxis: { tickangle: -45, tickfont: { size: 10 } },
+      yaxis: { tickfont: { size: 11 } },
+      paper_bgcolor: plotBg,
+      plot_bgcolor: plotBg,
+      font: plotFont,
+    }, { responsive: true, displayModeBar: false });
+
+    _plotEls.add(document.getElementById('stabilityHeatmap'));
+  }
+}
+
+function robBadgeClass(cls) {
+  if (cls === 'ROBUST') return 'success';
+  if (cls === 'MODERATE') return 'warning';
+  if (cls === 'FRAGILE') return 'warning';
+  return 'danger';
+}
+
+
+/* =====================================================================
+   RENDER: Tab 5 — Report & Certify (stub)
+   ===================================================================== */
+
+function renderTab5(verdict, studies, results, dossiers) {
+  const el = document.getElementById('reportContent');
+
+  const feasible = results.filter(r => r.converged);
+  const fullSpecs = feasible.filter(r => r.sensitivity === 'full');
+  const thetas = fullSpecs.map(r => r.theta);
+  const medianTheta = thetas.length ? sortedMedian(thetas) : 0;
+
+  const certBadgeClass = verdict.certification === 'PASS' ? 'badge-success'
+    : verdict.certification === 'WARN' ? 'badge-warning' : 'badge-danger';
+
+  // Dimension list for methods text
+  const dimLabels = { estimator: 'estimator', ciMethod: 'CI method', biasCorrection: 'bias correction', qualityFilter: 'quality filter', designFilter: 'design filter' };
+  const nDims = INFLUENCE_DIMS.length;
+  const dimListText = INFLUENCE_DIMS.map(d => dimLabels[d] || d).join(', ');
+
+  // Methods text
+  const methodsText = `We conducted a Multiverse Evidence Synthesis (MES) using ${studies.length} studies. `
+    + `The analysis explored ${results.length} specifications across ${nDims} dimensions: ${dimListText}. `
+    + `Six pooling estimators (FE, DL, REML, PM, SJ, ML), three confidence interval methods (Wald, HKSJ, t-distribution), `
+    + `four bias correction approaches (none, trim-fill, PET-PEESE, selection model), `
+    + `and multiple quality/design filters were crossed factorially. `
+    + (results.some(r => r.sensitivity && r.sensitivity.startsWith('loo_')) ? `Leave-one-out sensitivity analyses were included. ` : ``)
+    + `Robustness was classified using the MES concordance metric (C_sig), `
+    + `where C_sig >= 90% = Robust, 70-89% = Moderate, 50-69% = Fragile, <50% = Unstable. `
+    + `The overall classification was ${verdict.overallClass} (C_sig = ${(verdict.overallCSig * 100).toFixed(1)}%).`;
+
+  // R code export
+  const yiStr = dossiers.map(d => d.yi.toFixed(6)).join(', ');
+  const viStr = dossiers.map(d => d.vi.toFixed(6)).join(', ');
+  const rCode = `library(metafor)\n\n`
+    + `# Study data\n`
+    + `yi <- c(${yiStr})\n`
+    + `vi <- c(${viStr})\n\n`
+    + `# DerSimonian-Laird\n`
+    + `fit_dl <- rma(yi=yi, vi=vi, method="DL")\n`
+    + `summary(fit_dl)\n\n`
+    + `# REML\n`
+    + `fit_reml <- rma(yi=yi, vi=vi, method="REML")\n`
+    + `summary(fit_reml)\n\n`
+    + `# Maximum Likelihood\n`
+    + `fit_ml <- rma(yi=yi, vi=vi, method="ML")\n`
+    + `summary(fit_ml)\n\n`
+    + `# Paule-Mandel\n`
+    + `fit_pm <- rma(yi=yi, vi=vi, method="PM")\n`
+    + `summary(fit_pm)\n\n`
+    + `# Sidik-Jonkman\n`
+    + `fit_sj <- rma(yi=yi, vi=vi, method="SJ")\n`
+    + `summary(fit_sj)\n\n`
+    + `# Fixed-Effect\n`
+    + `fit_fe <- rma(yi=yi, vi=vi, method="FE")\n`
+    + `summary(fit_fe)\n\n`
+    + `# Forest plot (REML)\n`
+    + `forest(fit_reml)\n\n`
+    + `# Funnel plot\n`
+    + `funnel(fit_reml)\n\n`
+    + `# Egger test\n`
+    + `regtest(fit_reml)\n`;
+
+  // GRADE-MES mapping
+  const gradeMap = { ROBUST: 'HIGH', MODERATE: 'MODERATE', FRAGILE: 'LOW', UNSTABLE: 'VERY LOW' };
+  const gradeMapping = Object.entries(gradeMap).map(([mes, grade]) => {
+    const isActive = verdict.overallClass === mes;
+    const rowStyle = isActive ? 'background:var(--accent-light);font-weight:600;' : '';
+    return `<tr style="${rowStyle}">
+      <td><span class="badge badge-${robBadgeClass(mes)}">${mes}</span></td>
+      <td>${grade}</td>
+      <td>${isActive ? 'Current' : ''}</td>
+    </tr>`;
+  }).join('');
+
+  // TruthCert bundle data
+  const bundleTimestamp = new Date().toISOString();
+  const bundleHashInput = JSON.stringify({ studies, verdict: verdict.overallClass, cSig: verdict.overallCSig });
+
+  el.innerHTML = `
+    <div class="card" style="text-align:center;">
+      <div class="card-title">MES Certification</div>
+      <div style="margin:16px 0;">
+        <span class="badge ${certBadgeClass}" style="font-size:1.2rem;padding:8px 20px;">${verdict.certification}</span>
+      </div>
+      <p style="color:var(--text-muted);">${esc(verdict.certReason || '')}</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Summary</div>
+      <table class="data-table">
+        <tbody>
+          <tr><td><strong>Studies</strong></td><td>${studies.length}</td></tr>
+          <tr><td><strong>Total specifications</strong></td><td>${results.length}</td></tr>
+          <tr><td><strong>Feasible specifications</strong></td><td>${feasible.length}</td></tr>
+          <tr><td><strong>Robustness class</strong></td><td><span class="badge badge-${robBadgeClass(verdict.overallClass)}">${verdict.overallClass}</span></td></tr>
+          <tr><td><strong>C<sub>sig</sub></strong></td><td>${verdict.overallCSig.toFixed(4)}</td></tr>
+          <tr><td><strong>Median theta (full specs)</strong></td><td>${medianTheta.toFixed(4)}</td></tr>
+          <tr><td><strong>Dominant dimension</strong></td><td>${esc(verdict.dominantDimension)} (eta-sq = ${(verdict.dominantEta2 * 100).toFixed(1)}%)</td></tr>
+          <tr><td><strong>Prediction null rate</strong></td><td>${(verdict.predictionNullRate * 100).toFixed(1)}%</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Auto-generated Methods Text</div>
+      <div id="methodsTextBlock" style="background:var(--bg);padding:16px;border-radius:var(--radius);border:1px solid var(--border);font-size:0.9rem;line-height:1.7;margin-bottom:12px;">
+        ${esc(methodsText)}
+      </div>
+      <button class="btn btn-sm" onclick="copyToClipboard('methodsTextBlock')">Copy Methods Text</button>
+    </div>
+
+    <div class="card">
+      <div class="card-title">Narrative Interpretation</div>
+      <p>${generateNarrative(verdict, studies.length, results.length, feasible.length, medianTheta)}</p>
+    </div>
+
+    <div class="card">
+      <div class="card-title">GRADE-MES Mapping</div>
+      <div class="card-subtitle">Mapping MES robustness classes to GRADE certainty levels.</div>
+      <div class="table-wrapper">
+        <table class="data-table">
+          <thead><tr><th>MES Class</th><th>GRADE Certainty</th><th></th></tr></thead>
+          <tbody>${gradeMapping}</tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">R Code Export (metafor)</div>
+      <pre id="rCodeBlock" style="background:var(--bg);padding:16px;border-radius:var(--radius);border:1px solid var(--border);font-size:0.8rem;overflow-x:auto;max-height:400px;overflow-y:auto;font-family:var(--mono);white-space:pre-wrap;">${esc(rCode)}</pre>
+      <button class="btn btn-sm" onclick="copyToClipboard('rCodeBlock')" style="margin-top:8px;">Copy R Code</button>
+    </div>
+
+    <div class="card" id="rComparisonCard">
+      <div class="card-title">R Parity Comparison (metafor)</div>
+      <div class="card-subtitle">JS engine results vs. R metafor reference values for the BCG dataset. Green = match within tolerance (1e-4).</div>
+      <div id="rComparisonContent"></div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">TruthCert Bundle</div>
+      <table class="data-table">
+        <tbody>
+          <tr><td><strong>Certification</strong></td><td><span class="badge ${certBadgeClass}">${verdict.certification}</span></td></tr>
+          <tr><td><strong>Timestamp</strong></td><td>${esc(bundleTimestamp)}</td></tr>
+          <tr><td><strong>Input hash</strong></td><td id="certHashDisplay" style="font-family:var(--mono);font-size:0.8rem;">computing...</td></tr>
+          <tr><td><strong>Studies</strong></td><td>${studies.length}</td></tr>
+          <tr><td><strong>Specifications</strong></td><td>${results.length} total / ${feasible.length} feasible</td></tr>
+          <tr><td><strong>Verdict</strong></td><td>${verdict.overallClass} (C_sig = ${verdict.overallCSig.toFixed(4)})</td></tr>
+        </tbody>
+      </table>
+      <div class="btn-group" style="margin-top:12px;">
+        <button class="btn btn-primary btn-sm" onclick="exportTruthCertBundle()">Export Bundle (JSON)</button>
+        <button class="btn btn-primary btn-sm" onclick="exportResultsCSV()">Export Multiverse Results (CSV)</button>
+      </div>
+    </div>
+
+    <div class="card" style="text-align:center;">
+      <button class="btn btn-primary" onclick="window.print()" style="font-size:1rem;padding:10px 24px;">Print Report</button>
+    </div>
+  `;
+
+  // Populate R parity comparison table
+  populateRComparison(results);
+
+  // Async SHA-256 hash computation — updates DOM when ready
+  sha256(bundleHashInput).then(hash => {
+    const hashEl = document.getElementById('certHashDisplay');
+    if (hashEl) hashEl.textContent = hash;
+  });
+}
+
+/* =====================================================================
+   R PARITY: Compare JS results against embedded R metafor reference values
+   ===================================================================== */
+
+// BCG dataset reference values from R metafor (bcg_r_results.csv)
+const R_REFERENCE_BCG = {
+  FE:   { theta: -0.432137240066288, se: 0.0405714324618322, tau2: 0, I2: 92.095638504988 },
+  DL:   { theta: -0.714084218383755, se: 0.178656328563263, tau2: 0.308395570858314, I2: 92.095638504988 },
+  REML: { theta: -0.714534273275211, se: 0.179782858738692, tau2: 0.313252847021627, I2: 92.2086535451548 },
+  PM:   { theta: -0.714972591370559, se: 0.180900415221814, tau2: 0.318108089175603, I2: 92.3184370627296 },
+  SJ:   { theta: -0.717249751440247, se: 0.187061489788663, tau2: 0.345528682725781, I2: 92.8846585274979 },
+  ML:   { theta: -0.711202252613133, se: 0.171897802288778, tau2: 0.280035986325651, I2: 91.3642817816556 },
+};
+
+function populateRComparison(results) {
+  const el = document.getElementById('rComparisonContent');
+  if (!el) return;
+
+  // Check if this is the BCG dataset by looking for matching study count / theta range
+  const fullSpecs = results.filter(r => r.converged && r.sensitivity === 'full'
+    && r.biasCorrection === 'none' && r.qualityFilter === 'all'
+    && r.designFilter === 'all' && r.ciMethod === 'Wald');
+
+  if (fullSpecs.length === 0) {
+    el.innerHTML = '<p style="color:var(--text-muted);">No base specifications found for comparison.</p>';
+    return;
+  }
+
+  // Build comparison by estimator
+  const jsValues = {};
+  for (const r of fullSpecs) {
+    jsValues[r.estimator] = { theta: r.theta, se: r.se, tau2: r.tau2, I2: r.I2 };
+  }
+
+  // Check if JS values are close to BCG reference (rough heuristic: DL theta near -0.71)
+  const dlSpec = jsValues['DL'];
+  const isBCG = dlSpec && Math.abs(dlSpec.theta - (-0.714)) < 0.05;
+
+  const refData = isBCG ? R_REFERENCE_BCG : null;
+  const tolerance = 1e-4;
+
+  function matchIcon(jsVal, rVal) {
+    if (rVal === undefined || rVal === null) return '';
+    const diff = Math.abs(jsVal - rVal);
+    const relTol = Math.max(tolerance, Math.abs(rVal) * 1e-4);
+    return diff < relTol
+      ? '<span style="color:var(--success);font-weight:700;">&#10003;</span>'
+      : '<span style="color:var(--danger);font-weight:700;">&#10007; (' + diff.toExponential(2) + ')</span>';
+  }
+
+  const estimators = ['FE', 'DL', 'REML', 'PM', 'SJ', 'ML'];
+  let rows = '';
+  let allMatch = true;
+  for (const est of estimators) {
+    const js = jsValues[est];
+    const ref = refData ? refData[est] : null;
+    if (!js) continue;
+
+    const thetaMatch = ref ? matchIcon(js.theta, ref.theta) : '';
+    const tau2Match = ref ? matchIcon(js.tau2, ref.tau2) : '';
+    const seMatch = ref ? matchIcon(js.se, ref.se) : '';
+
+    if (ref) {
+      const tDiff = Math.abs(js.theta - ref.theta);
+      const sDiff = Math.abs(js.se - ref.se);
+      const t2Diff = Math.abs(js.tau2 - ref.tau2);
+      const relTheta = Math.max(tolerance, Math.abs(ref.theta) * 1e-4);
+      const relSe = Math.max(tolerance, Math.abs(ref.se) * 1e-4);
+      const relTau2 = Math.max(tolerance, Math.abs(ref.tau2) * 1e-4);
+      if (tDiff >= relTheta || sDiff >= relSe || t2Diff >= relTau2) allMatch = false;
+    }
+
+    rows += '<tr>'
+      + '<td><strong>' + esc(est) + '</strong></td>'
+      + '<td style="font-family:var(--mono);font-size:0.85rem;">' + js.theta.toFixed(6) + '</td>'
+      + '<td style="font-family:var(--mono);font-size:0.85rem;">' + (ref ? ref.theta.toFixed(6) : 'N/A') + '</td>'
+      + '<td>' + thetaMatch + '</td>'
+      + '<td style="font-family:var(--mono);font-size:0.85rem;">' + js.tau2.toFixed(6) + '</td>'
+      + '<td style="font-family:var(--mono);font-size:0.85rem;">' + (ref ? ref.tau2.toFixed(6) : 'N/A') + '</td>'
+      + '<td>' + tau2Match + '</td>'
+      + '<td style="font-family:var(--mono);font-size:0.85rem;">' + js.se.toFixed(6) + '</td>'
+      + '<td style="font-family:var(--mono);font-size:0.85rem;">' + (ref ? ref.se.toFixed(6) : 'N/A') + '</td>'
+      + '<td>' + seMatch + '</td>'
+      + '</tr>';
+  }
+
+  const statusBadge = !refData
+    ? '<span class="badge badge-info">Custom dataset (no R reference)</span>'
+    : allMatch
+      ? '<span class="badge badge-success">All estimators match R metafor</span>'
+      : '<span class="badge badge-danger">Some mismatches detected</span>';
+
+  el.innerHTML = '<div style="margin-bottom:8px;">' + statusBadge + '</div>'
+    + '<div class="table-wrapper"><table class="data-table">'
+    + '<thead><tr>'
+    + '<th>Estimator</th>'
+    + '<th>JS theta</th><th>R theta</th><th></th>'
+    + '<th>JS tau2</th><th>R tau2</th><th></th>'
+    + '<th>JS SE</th><th>R SE</th><th></th>'
+    + '</tr></thead>'
+    + '<tbody>' + rows + '</tbody></table></div>';
+
+  if (!refData) {
+    el.innerHTML += '<p style="color:var(--text-muted);margin-top:8px;font-size:0.85rem;">'
+      + 'R reference values are embedded for the BCG vaccine dataset. '
+      + 'For other datasets, use the R code export above to validate independently.</p>';
+  }
+}
+
+function generateNarrative(verdict, nStudies, nSpecs, nFeasible, medianTheta) {
+  const dir = medianTheta < 0 ? 'negative' : medianTheta > 0 ? 'positive' : 'null';
+  const cls = verdict.overallClass;
+  let text = `This meta-analysis of ${nStudies} studies was subjected to multiverse evidence synthesis `;
+  text += `across ${nSpecs} analytical specifications (${nFeasible} feasible). `;
+
+  if (cls === 'ROBUST') {
+    text += `The evidence was classified as <strong>ROBUST</strong> (C<sub>sig</sub> = ${verdict.overallCSig.toFixed(2)}), `;
+    text += `indicating that the ${dir} finding (median theta = ${medianTheta.toFixed(3)}) is highly stable across methodological choices.`;
+  } else if (cls === 'MODERATE') {
+    text += `The evidence was classified as <strong>MODERATE</strong> (C<sub>sig</sub> = ${verdict.overallCSig.toFixed(2)}), `;
+    text += `indicating that the ${dir} finding (median theta = ${medianTheta.toFixed(3)}) is stable across most but not all methodological choices.`;
+  } else if (cls === 'FRAGILE') {
+    text += `The evidence was classified as <strong>FRAGILE</strong> (C<sub>sig</sub> = ${verdict.overallCSig.toFixed(2)}), `;
+    text += `indicating that the conclusion is sensitive to methodological choices. The median effect was ${medianTheta.toFixed(3)}.`;
+  } else {
+    text += `The evidence was classified as <strong>UNSTABLE</strong> (C<sub>sig</sub> = ${verdict.overallCSig.toFixed(2)}), `;
+    text += `indicating that the conclusion changes substantially depending on analytical choices. The median effect was ${medianTheta.toFixed(3)}.`;
+  }
+
+  if (verdict.dominantEta2 > 0.05) {
+    text += ` The most influential dimension was <strong>${verdict.dominantDimension}</strong> (eta-sq = ${(verdict.dominantEta2 * 100).toFixed(1)}%).`;
+  }
+  return text;
+}
+
+
+/* =====================================================================
+   UTILITY: Copy to clipboard
+   ===================================================================== */
+
+function copyToClipboard(elementId) {
+  const block = document.getElementById(elementId);
+  if (!block) return;
+  const text = block.textContent || block.innerText;
+  navigator.clipboard.writeText(text).then(() => {
+    showCopyFeedback(block);
+  }).catch(() => {
+    // Fallback for older browsers
+    const ta = document.createElement('textarea');
+    ta.value = text;
+    ta.style.position = 'fixed';
+    ta.style.left = '-9999px';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); showCopyFeedback(block); } catch (e) { /* ignore */ }
+    document.body.removeChild(ta);
+  });
+}
+
+function showCopyFeedback(el) {
+  const orig = el.style.borderColor;
+  el.style.borderColor = '#22c55e';
+  setTimeout(() => { el.style.borderColor = orig; }, 1200);
+}
+
+
+/* =====================================================================
+   UTILITY: SHA-256 hash for TruthCert (Web Crypto API)
+   ===================================================================== */
+
+async function sha256(text) {
+  const data = new TextEncoder().encode(text);
+  const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+// Synchronous placeholder that returns a pending marker;
+// callers that need the hash should await sha256() directly.
+function fastHash(str) {
+  return 'sha256-pending';
+}
+
+
+/* =====================================================================
+   UTILITY: Export TruthCert Bundle
+   ===================================================================== */
+
+async function exportTruthCertBundle() {
+  if (!appState.verdict || !appState.results || !appState.dossiers) {
+    showError('No analysis results to export.');
+    return;
+  }
+
+  const inputHash = await sha256(JSON.stringify(appState.dossiers.map(d => ({ yi: d.yi, vi: d.vi, id: d.studyId }))));
+
+  const bundle = {
+    truthcert: {
+      version: '1.0',
+      tool: 'MES - Multiverse Evidence Synthesis',
+      timestamp: new Date().toISOString(),
+      inputHash: inputHash,
+    },
+    input: {
+      studies: appState.dossiers.map(d => ({
+        studyId: d.studyId,
+        yi: d.yi,
+        vi: d.vi,
+        designType: d.designType,
+        designTier: d.designTier,
+        rob: d.rob,
+        year: d.year,
+      })),
+      k: appState.dossiers.length,
+    },
+    verdict: {
+      overallClass: appState.verdict.overallClass,
+      overallCSig: appState.verdict.overallCSig,
+      concordance: appState.verdict.concordance,
+      conditional: appState.verdict.conditional,
+      dominantDimension: appState.verdict.dominantDimension,
+      dominantEta2: appState.verdict.dominantEta2,
+      eta2All: appState.verdict.eta2All,
+      boundaries: appState.verdict.boundaries,
+      predictionNullRate: appState.verdict.predictionNullRate,
+      certification: appState.verdict.certification,
+      certReason: appState.verdict.certReason,
+    },
+    biasProfile: appState.biasProfile,
+    specifications: {
+      total: appState.results.length,
+      feasible: appState.results.filter(r => r.converged).length,
+      errors: appState.results.filter(r => !r.converged).length,
+    },
+    results: appState.results.map(r => ({
+      specId: r.specId,
+      theta: r.theta,
+      se: r.se,
+      ciLo: r.ciLo,
+      ciHi: r.ciHi,
+      pValue: r.pValue,
+      tau2: r.tau2,
+      I2: r.I2,
+      k: r.k,
+      significant: r.significant,
+      direction: r.direction,
+      converged: r.converged,
+    })),
+  };
+
+  const bundleJson = JSON.stringify(bundle, null, 2);
+  const bundleHash = await sha256(bundleJson);
+  bundle.truthcert.bundleHash = bundleHash;
+
+  const json = JSON.stringify(bundle, null, 2);
+  const blob = new Blob([json], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mes-truthcert-bundle.json';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+
+/* =====================================================================
+   UTILITY: Export Multiverse Results as CSV
+   ===================================================================== */
+
+function exportResultsCSV() {
+  const results = appState.results;
+  if (!results || results.length === 0) { showError('Run analysis first'); return; }
+
+  const headers = ['specId','estimator','ciMethod','biasCorrection','qualityFilter',
+                   'designFilter','sensitivity','theta','se','ciLo','ciHi','pValue',
+                   'tau2','I2','k','piLo','piHi','significant','direction'];
+
+  let csv = headers.join(',') + '\n';
+  for (const r of results) {
+    const row = headers.map(h => {
+      let val = r[h];
+      if (val === undefined || val === null) return '';
+      if (typeof val === 'string') {
+        // CSV formula injection prevention (but don't strip minus for numbers)
+        if (/^[=+@\t\r]/.test(val)) val = "'" + val;
+        return '"' + val.replace(/"/g, '""') + '"';
+      }
+      return val;
+    });
+    csv += row.join(',') + '\n';
+  }
+
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'mes_multiverse_results.csv';
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+}
+
+
+/* =====================================================================
+   UTILITY: escapeHtml
+   ===================================================================== */
+
+function esc(s) {
+  const div = document.createElement('div');
+  div.textContent = String(s);
+  return div.innerHTML;
+}
+
+
+/* =====================================================================
+   ABOUT MODAL
+   ===================================================================== */
+
+function openAboutModal() {
+  document.getElementById('aboutOverlay').classList.add('show');
+  document.getElementById('aboutCloseBtn').focus();
+  document.addEventListener('keydown', aboutKeyHandler);
+}
+
+function closeAboutModal() {
+  document.getElementById('aboutOverlay').classList.remove('show');
+  document.removeEventListener('keydown', aboutKeyHandler);
+  document.getElementById('aboutBtn').focus();
+}
+
+function aboutKeyHandler(e) {
+  if (e.key === 'Escape') { closeAboutModal(); e.preventDefault(); }
+}
+
+// Click outside about box to close
+document.getElementById('aboutOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeAboutModal();
+});
+
+
+/* =====================================================================
+   KEYBOARD NAVIGATION (Arrow keys for tabs)
+   ===================================================================== */
+
+document.querySelector('[role="tablist"]').addEventListener('keydown', function(e) {
+  const tabs = Array.from(document.querySelectorAll('[role="tab"]'));
+  const current = tabs.findIndex(t => t.getAttribute('aria-selected') === 'true');
+  if (current < 0) return;
+
+  let next = -1;
+  if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+    // Find next non-disabled tab
+    for (let i = 1; i <= tabs.length; i++) {
+      const idx = (current + i) % tabs.length;
+      if (!tabs[idx].disabled) { next = idx; break; }
+    }
+    e.preventDefault();
+  } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+    // Find previous non-disabled tab
+    for (let i = 1; i <= tabs.length; i++) {
+      const idx = (current - i + tabs.length) % tabs.length;
+      if (!tabs[idx].disabled) { next = idx; break; }
+    }
+    e.preventDefault();
+  } else if (e.key === 'Home') {
+    for (let i = 0; i < tabs.length; i++) {
+      if (!tabs[i].disabled) { next = i; break; }
+    }
+    e.preventDefault();
+  } else if (e.key === 'End') {
+    for (let i = tabs.length - 1; i >= 0; i--) {
+      if (!tabs[i].disabled) { next = i; break; }
+    }
+    e.preventDefault();
+  }
+
+  if (next >= 0 && next !== current) {
+    const tabId = tabs[next].dataset.tab;
+    switchTab(tabId);
+  }
+});
+
+
+/* =====================================================================
+   INIT — add 3 empty rows + restore theme
+   ===================================================================== */
+(function init() {
+  addRow();
+  addRow();
+  addRow();
+  // Restore theme from localStorage
+  try {
+    if (localStorage.getItem('mes_theme') === 'dark') {
+      document.body.classList.add('dark');
+    }
+  } catch (e) {}
+})();
+
+</script>
+</body>
+</html>
