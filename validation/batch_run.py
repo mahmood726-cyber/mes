@@ -18,12 +18,16 @@ from mes_core.models import MESSpec
 from mes_core.io.rda_reader import read_rda
 
 
-# Candidate directories for Pairwise70 RDA files
+# Candidate directories for Pairwise70 RDA files.
+# Respect PAIRWISE70_DATA env var first, then fall back to machine-portable
+# candidates constructed from Path.home() (no literal user paths in source).
 _DATA_CANDIDATES = [
+    os.environ.get("PAIRWISE70_DATA", ""),
     r"C:\Models\Pairwise70\data",
     r"C:\FragilityAtlas\data",
-    r"C:\Users\user\OneDrive - NHS\Documents\Pairwise70\data",
+    str(Path.home() / "OneDrive - NHS" / "Documents" / "Pairwise70" / "data"),
 ]
+_DATA_CANDIDATES = [c for c in _DATA_CANDIDATES if c]
 
 
 def find_data_dir() -> str | None:
