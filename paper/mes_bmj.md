@@ -173,7 +173,7 @@ Meta-analysis conclusions are more fragile than the standard reporting format su
 
 ## Data Availability
 
-All 403 processed reviews, intermediate outputs, and the MES engine source code are available at https://github.com/mahmood726-cyber/MES. Input data are from the Pairwise70 Cochrane dataset (DATASET_DOI_PLACEHOLDER).
+All 403 processed reviews, intermediate outputs, and the MES engine source code are available at https://github.com/mahmood726-cyber/MES. Input data are from the Pairwise70 Cochrane dataset.
 
 ---
 

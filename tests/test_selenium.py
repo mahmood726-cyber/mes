@@ -343,7 +343,7 @@ def test_about_modal_opens(driver):
     body = driver.find_element(By.TAG_NAME, "body").text
     assert "About MES" in body
     assert "v1.0.0" in body
-    assert "AUTHOR_PLACEHOLDER" in body
+    assert "Mahmood Ahmad" in body  # author — was AUTHOR_PLACEHOLDER before fill
 
 
 def test_about_modal_closes_with_button(driver):
