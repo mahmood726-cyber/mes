@@ -2,9 +2,9 @@
 
 **Mahmood Ahmad**¹
 
-¹ AFFILIATION_PLACEHOLDER
+¹ Tahir Heart Institute
 
-**Correspondence:** EMAIL_PLACEHOLDER | ORCID: ORCID_PLACEHOLDER
+**Correspondence:** mahmood.ahmad2@nhs.net | ORCID: 0009-0003-7781-4478
 
 ---
 
@@ -20,7 +20,7 @@
 
 **Results:** Of 403 Cochrane reviews processed (98 excluded for unreadable data), 130 (32.3%) were classified ROBUST, 112 (27.8%) MODERATE, 147 (36.5%) FRAGILE, and 14 (3.5%) UNSTABLE. In total, 161 reviews (40.0%) fell in the FRAGILE or UNSTABLE tiers. The mean C_sig was 0.763 (SD 0.183; median 0.739; interquartile range 0.647–1.000). Bias correction was the dominant source of variance in 399 of 403 reviews (99.0%), with a mean dominant η² of 0.929. Prediction intervals crossed the null in a mean of 84.6% of specifications per review (median 95.7%), and in at least half of specifications in 347 reviews (86.1%).
 
-**Conclusion:** Four in ten Cochrane meta-analyses are analytically fragile: their conclusions change substantially depending on whether and how publication bias is addressed. MES provides a systematic framework for quantifying this sensitivity and for reporting evidence landscapes rather than single-model point estimates. MES is freely available at GITHUB_PLACEHOLDER.
+**Conclusion:** Four in ten Cochrane meta-analyses are analytically fragile: their conclusions change substantially depending on whether and how publication bias is addressed. MES provides a systematic framework for quantifying this sensitivity and for reporting evidence landscapes rather than single-model point estimates. MES is freely available at https://github.com/mahmood726-cyber/MES.
 
 ---
 
@@ -167,19 +167,19 @@ The dominant role of bias correction identified here — accounting for 99% of d
 
 ## Conclusion
 
-Meta-analysis conclusions are more fragile than the standard reporting format suggests. In a large-scale empirical validation across 403 Cochrane systematic reviews, Multiverse Evidence Synthesis revealed that four in ten (40.0%) reviews are analytically fragile or unstable — yielding a statistically significant result in the same direction as the primary estimate in fewer than 65% of defensible analytical specifications. The primary source of this fragility is the treatment of publication bias, which dominated the cross-specification variance in 99.0% of reviews. We propose that meta-analysis reporting should transition from a single pooled estimate to an evidence landscape: the distribution of results across all defensible specifications, summarised by a concordance score and robustness tier. MES is freely available at GITHUB_PLACEHOLDER.
+Meta-analysis conclusions are more fragile than the standard reporting format suggests. In a large-scale empirical validation across 403 Cochrane systematic reviews, Multiverse Evidence Synthesis revealed that four in ten (40.0%) reviews are analytically fragile or unstable — yielding a statistically significant result in the same direction as the primary estimate in fewer than 65% of defensible analytical specifications. The primary source of this fragility is the treatment of publication bias, which dominated the cross-specification variance in 99.0% of reviews. We propose that meta-analysis reporting should transition from a single pooled estimate to an evidence landscape: the distribution of results across all defensible specifications, summarised by a concordance score and robustness tier. MES is freely available at https://github.com/mahmood726-cyber/MES.
 
 ---
 
 ## Data Availability
 
-All 403 processed reviews, intermediate outputs, and the MES engine source code are available at GITHUB_PLACEHOLDER. Input data are from the Pairwise70 Cochrane dataset (DATASET_DOI_PLACEHOLDER).
+All 403 processed reviews, intermediate outputs, and the MES engine source code are available at https://github.com/mahmood726-cyber/MES. Input data are from the Pairwise70 Cochrane dataset (DATASET_DOI_PLACEHOLDER).
 
 ---
 
 ## Funding
 
-FUNDING_PLACEHOLDER
+No external funding.
 
 ## Competing Interests
 
@@ -187,7 +187,7 @@ The author declares no competing interests.
 
 ## Acknowledgements
 
-ACKNOWLEDGEMENTS_PLACEHOLDER
+The author thanks contributors and maintainers of the Pairwise70 dataset and the R metafor package.
 
 ---
 
