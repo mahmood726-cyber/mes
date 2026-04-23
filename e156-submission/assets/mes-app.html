@@ -592,7 +592,7 @@ header .container {
       <div class="card-title">Import CSV</div>
       <div class="card-subtitle">CSV must have columns for study ID, effect size (yi), and variance (vi). Headers are fuzzy-matched.</div>
       <div class="form-row">
-        <input type="file" id="csvFile" accept=".csv,.tsv,.txt">
+        <input type="file" id="csvFile" aria-label="Upload CSV or TSV data file" accept=".csv,.tsv,.txt">
         <button class="btn" id="importCsvBtn" aria-label="Import CSV file" onclick="importCSV()">Import</button>
       </div>
     </div>
@@ -627,7 +627,7 @@ header .container {
       <button class="btn btn-primary" style="font-size: 1.1rem; padding: 12px 32px;" onclick="runAnalysis()" id="runBtn" aria-label="Run MES Analysis">
         Run MES Analysis
       </button>
-      <label style="margin-left:16px;font-size:0.9rem;cursor:pointer;">
+      <label for="looCheckbox" style="margin-left:16px;font-size:0.9rem;cursor:pointer;">
         <input type="checkbox" id="looCheckbox" style="margin-right:4px;"> Include Leave-One-Out Sensitivity
       </label>
     </div>
@@ -2291,11 +2291,11 @@ function addRow(study) {
 
   tr.innerHTML = `
     <td class="row-num">${rowCounter}</td>
-    <td><input type="text" class="inp-sid" value="${escapeAttr(sid)}" placeholder="Study ID"></td>
-    <td><input type="number" class="inp-yi" value="${yiVal}" step="any" placeholder="0.00"></td>
-    <td><input type="number" class="inp-vi" value="${viVal}" step="any" placeholder="0.00"></td>
+    <td><input type="text" aria-label="Study ID" class="inp-sid" value="${escapeAttr(sid)}" placeholder="Study ID"></td>
+    <td><input type="number" aria-label="Effect size (yi)" class="inp-yi" value="${yiVal}" step="any" placeholder="0.00"></td>
+    <td><input type="number" aria-label="Variance (vi)" class="inp-vi" value="${viVal}" step="any" placeholder="0.00"></td>
     <td>
-      <select class="inp-design">
+      <select aria-label="Study design" class="inp-design">
         <option value="RCT"${design === 'RCT' ? ' selected' : ''}>RCT</option>
         <option value="quasi-experimental"${design === 'quasi-experimental' ? ' selected' : ''}>Quasi-experimental</option>
         <option value="MR"${design === 'MR' ? ' selected' : ''}>MR</option>
@@ -2305,7 +2305,7 @@ function addRow(study) {
       </select>
     </td>
     <td>
-      <select class="inp-rob">
+      <select aria-label="Risk of bias overall" class="inp-rob">
         <option value=""${rob === '' ? ' selected' : ''}>(none)</option>
         <option value="low"${rob === 'low' ? ' selected' : ''}>Low</option>
         <option value="some_concerns"${rob === 'some_concerns' ? ' selected' : ''}>Some concerns</option>
